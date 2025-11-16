@@ -1,6 +1,5 @@
-
-// components/Loads/LoadForm.jsx
 import React, { useEffect } from 'react';
+import { destinationsService } from '../../services/destinations.service';
 
 const LoadForm = ({ 
   formData, 
@@ -19,25 +18,47 @@ const LoadForm = ({
     const montantTotal = quantite * prixParTonne;
     const currentTotal = parseFloat(formData.totalAmount) || 0;
     
-    // Ne mettre à jour que si le calcul est différent (évite les boucles infinies)
     if (Math.abs(montantTotal - currentTotal) > 0.01) {
       onChange({
         ...formData, 
         totalAmount: montantTotal.toFixed(2)
       });
     }
-  }, [formData.quantite, formData.prixParTonne]); // Ne pas inclure formData complet
+  }, [formData.quantite, formData.prixParTonne]);
 
   // Mettre à jour le prix par tonne quand la destination change
-  const handleDestinationChange = (region) => {
-    const destination = destinations.find(d => d.region === region);
-    const prixParTonne = destination ? destination.prix_par_tonne : 0;
-    
-    onChange({
-      ...formData,
-      destination: region,
-      prixParTonne: prixParTonne
-    });
+  const handleDestinationChange = async (region) => {
+    try {
+      let prixParTonne = 0;
+      
+      // Essayer d'abord avec les destinations en mémoire
+      const destinationFromMemory = destinations.find(d => d.region === region);
+      if (destinationFromMemory) {
+        prixParTonne = destinationFromMemory.prix_par_tonne;
+      } else {
+        // Fallback: chercher directement dans la base de données
+        prixParTonne = await destinationsService.getPrixParTonne(region);
+      }
+      
+      onChange({
+        ...formData,
+        destination: region,
+        prixParTonne: prixParTonne
+      });
+    } catch (error) {
+      console.error('Erreur lors de la récupération du prix:', error);
+      // Utiliser une valeur par défaut en cas d'erreur
+      onChange({
+        ...formData,
+        destination: region,
+        prixParTonne: 0
+      });
+    }
+  };
+
+  // Fonction pour formater le prix
+  const formatPrice = (price) => {
+    return parseFloat(price || 0).toLocaleString('fr-FR');
   };
 
   return (
@@ -101,14 +122,14 @@ const LoadForm = ({
               ) : (
                 destinations.map(dest => (
                   <option key={dest.id} value={dest.region}>
-                    {dest.region} - {(dest.prix_par_tonne || 0).toLocaleString()} FCFA/tonne
+                    {dest.region} - {formatPrice(dest.prix_par_tonne)} FCFA/tonne
                   </option>
                 ))
               )}
             </select>
             {destinations.length === 0 && (
               <p className="text-xs text-orange-500 mt-1">
-                ⚠️ Les destinations ne sont pas encore chargées. Vérifiez la base de données.
+                ⚠️ Les destinations ne sont pas encore chargées
               </p>
             )}
           </div>
@@ -151,13 +172,13 @@ const LoadForm = ({
               Prix par Tonne (FCFA)
             </label>
             <input
-              type="number"
-              value={formData.prixParTonne || 0}
-              className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600"
+              type="text"
+              value={formatPrice(formData.prixParTonne)}
+              className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 font-semibold"
               readOnly
             />
             <p className="text-xs text-gray-500 mt-1">
-              Calculé automatiquement selon la destination
+              Prix fixe selon la destination
             </p>
           </div>
           <div>
@@ -165,14 +186,14 @@ const LoadForm = ({
               Montant Total (FCFA)
             </label>
             <input
-              type="number"
-              value={formData.totalAmount || 0}
-              className="w-full px-4 py-2 border rounded-lg bg-blue-50 text-blue-700 font-bold"
+              type="text"
+              value={formatPrice(formData.totalAmount)}
+              className="w-full px-4 py-2 border rounded-lg bg-blue-50 text-blue-700 font-bold text-lg"
               readOnly
             />
             <p className="text-xs text-gray-500 mt-1">
               {formData.quantite && formData.prixParTonne 
-                ? `${formData.quantite} × ${parseFloat(formData.prixParTonne || 0).toLocaleString()} FCFA`
+                ? `${formData.quantite} × ${formatPrice(formData.prixParTonne)} FCFA`
                 : 'Calculé automatiquement'
               }
             </p>
@@ -212,9 +233,9 @@ const LoadForm = ({
               <p><span className="font-semibold">Trajet:</span> {formData.origin} → {formData.destination}</p>
               <p><span className="font-semibold">Type:</span> {formData.typeChargement || 'Non spécifié'}</p>
               <p><span className="font-semibold">Quantité:</span> {formData.quantite} tonnes</p>
-              <p><span className="font-semibold">Prix/tonne:</span> {parseFloat(formData.prixParTonne || 0).toLocaleString()} FCFA</p>
+              <p><span className="font-semibold">Prix/tonne:</span> {formatPrice(formData.prixParTonne)} FCFA</p>
               <p className="text-lg font-bold text-green-700 mt-2">
-                💰 Total: {parseFloat(formData.totalAmount || 0).toLocaleString()} FCFA
+                💰 Total: {formatPrice(formData.totalAmount)} FCFA
               </p>
             </div>
           </div>

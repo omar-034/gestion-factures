@@ -1,32 +1,35 @@
 import { supabase } from '../supabaseClient';
 
-// Service pour les Chauffeurs
+// Service des chauffeurs
 export const driverService = {
   async getAll() {
     const { data, error } = await supabase
       .from('drivers')
       .select('*')
-      .order('created_at', { ascending: false });
-    
+      .order('name');
     if (error) throw error;
     return data || [];
   },
 
   async create(driverData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('drivers')
-      .insert([driverData]);
-    
+      .insert([driverData])
+      .select()
+      .single();
     if (error) throw error;
+    return data;
   },
 
   async update(id, driverData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('drivers')
       .update(driverData)
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select()
+      .single();
     if (error) throw error;
+    return data;
   },
 
   async delete(id) {
@@ -34,48 +37,70 @@ export const driverService = {
       .from('drivers')
       .delete()
       .eq('id', id);
-    
     if (error) throw error;
   },
 
   async checkExists(name) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('drivers')
       .select('id')
-      .ilike('name', name)
+      .eq('name', name)
       .single();
-    
     return !!data;
   }
 };
 
-// Service pour les Chargements
+// Service des chargements
 export const loadService = {
   async getAll() {
     const { data, error } = await supabase
       .from('loads')
       .select('*')
       .order('created_at', { ascending: false });
-    
     if (error) throw error;
     return data || [];
   },
 
   async create(loadData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('loads')
-      .insert([loadData]);
-    
+      .insert([{
+        driver_name: loadData.driverName || loadData.driver_name,
+        load_number: loadData.loadNumber || loadData.load_number,
+        origin: loadData.origin,
+        destination: loadData.destination,
+        type_chargement: loadData.typeChargement || loadData.type_chargement,
+        quantite: loadData.quantite ? parseFloat(loadData.quantite) : null,
+        prix_par_tonne: loadData.prixParTonne || loadData.prix_par_tonne ? parseFloat(loadData.prixParTonne || loadData.prix_par_tonne) : null,
+        total_amount: loadData.totalAmount || loadData.total_amount ? parseFloat(loadData.totalAmount || loadData.total_amount) : null,
+        date: loadData.date,
+        description: loadData.description || ''
+      }])
+      .select()
+      .single();
     if (error) throw error;
+    return data;
   },
 
   async update(id, loadData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('loads')
-      .update(loadData)
-      .eq('id', id);
-    
+      .update({
+        driver_name: loadData.driverName || loadData.driver_name,
+        origin: loadData.origin,
+        destination: loadData.destination,
+        type_chargement: loadData.typeChargement || loadData.type_chargement,
+        quantite: loadData.quantite ? parseFloat(loadData.quantite) : null,
+        prix_par_tonne: loadData.prixParTonne || loadData.prix_par_tonne ? parseFloat(loadData.prixParTonne || loadData.prix_par_tonne) : null,
+        total_amount: loadData.totalAmount || loadData.total_amount ? parseFloat(loadData.totalAmount || loadData.total_amount) : null,
+        date: loadData.date,
+        description: loadData.description || ''
+      })
+      .eq('id', id)
+      .select()
+      .single();
     if (error) throw error;
+    return data;
   },
 
   async delete(id) {
@@ -83,29 +108,37 @@ export const loadService = {
       .from('loads')
       .delete()
       .eq('id', id);
-    
     if (error) throw error;
   }
 };
 
-// Service pour les Paiements
+// Service des paiements
 export const paymentService = {
   async getAll() {
     const { data, error } = await supabase
       .from('payments')
       .select('*')
-      .order('created_at', { ascending: false });
-    
+      .order('date', { ascending: false });
     if (error) throw error;
     return data || [];
   },
 
   async create(paymentData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('payments')
-      .insert([paymentData]);
-    
+      .insert([{
+        load_id: paymentData.load_id,
+        load_number: paymentData.load_number,
+        driver_name: paymentData.driver_name,
+        amount: parseFloat(paymentData.amount),
+        date: paymentData.date,
+        payment_method: paymentData.payment_method,
+        note: paymentData.note || ''
+      }])
+      .select()
+      .single();
     if (error) throw error;
+    return data;
   },
 
   async delete(id) {
@@ -113,7 +146,6 @@ export const paymentService = {
       .from('payments')
       .delete()
       .eq('id', id);
-    
     if (error) throw error;
   }
 };

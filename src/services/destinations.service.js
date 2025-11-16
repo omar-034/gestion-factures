@@ -1,35 +1,53 @@
-// services/destinations.service.js
+// src/services/destinations.service.js
 import { supabase } from '../supabaseClient';
 
+// Service des destinations
 export const destinationsService = {
   // Récupérer toutes les destinations
   async getAll() {
-    const { data, error } = await supabase
-      .from('destinations')
-      .select('*')
-      .order('region', { ascending: true });
-    
-    if (error) throw error;
-    return data || [];
+    try {
+      console.log('🔄 destinationsService.getAll() appelé');
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('*')
+        .order('region', { ascending: true });
+      
+      if (error) {
+        console.error('❌ Erreur Supabase dans getAll:', error);
+        throw error;
+      }
+      
+      console.log('✅ destinationsService.getAll() réussi:', data?.length, 'destinations');
+      return data || [];
+    } catch (error) {
+      console.error('💥 Erreur critique dans getAll:', error);
+      throw error;
+    }
   },
 
   // Créer une destination
   async create(destinationData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('destinations')
-      .insert([destinationData]);
+      .insert([destinationData])
+      .select()
+      .single();
     
     if (error) throw error;
+    return data;
   },
 
   // Mettre à jour une destination
   async update(id, destinationData) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('destinations')
       .update(destinationData)
-      .eq('id', id);
+      .eq('id', id)
+      .select()
+      .single();
     
     if (error) throw error;
+    return data;
   },
 
   // Supprimer une destination
@@ -42,9 +60,11 @@ export const destinationsService = {
     if (error) throw error;
   },
 
-  // Initialiser les destinations depuis le JSON
+  // Initialiser les destinations
   async seedDestinations(destinationsData) {
     try {
+      console.log('🔄 seedDestinations appelé');
+      
       // Vérifier si des destinations existent déjà
       const { data: existing } = await supabase
         .from('destinations')
@@ -52,28 +72,37 @@ export const destinationsService = {
         .limit(1);
 
       if (existing && existing.length > 0) {
-        console.log('Les destinations existent déjà');
+        console.log('📍 Les destinations existent déjà');
         return;
       }
 
-      // Insérer toutes les destinations
+      // Préparer les données
+      const destinationsToInsert = destinationsData.destinations.map(d => ({
+        region: d.region,
+        ville: d.ville || d.region,
+        prix_par_tonne: d.prixParTonne
+      }));
+
+      console.log('📤 Données à insérer:', destinationsToInsert);
+
+      // Insérer les destinations
       const { error } = await supabase
         .from('destinations')
-        .insert(destinationsData.destinations.map(d => ({
-          region: d.region,
-          ville: d.ville,
-          prix_par_tonne: d.prixParTonne
-        })));
+        .insert(destinationsToInsert);
 
-      if (error) throw error;
-      console.log('Destinations initialisées avec succès');
+      if (error) {
+        console.error('❌ Erreur insertion:', error);
+        throw error;
+      }
+      
+      console.log('✅ Destinations initialisées avec succès');
     } catch (error) {
-      console.error('Erreur lors de l\'initialisation:', error);
+      console.error('💥 Erreur seedDestinations:', error);
       throw error;
     }
   },
 
-  // Obtenir le prix par tonne pour une destination
+  // Obtenir le prix par tonne pour une région
   async getPrixParTonne(region) {
     const { data, error } = await supabase
       .from('destinations')
@@ -81,7 +110,13 @@ export const destinationsService = {
       .eq('region', region)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Erreur getPrixParTonne:', error);
+      return 0;
+    }
     return data?.prix_par_tonne || 0;
   }
 };
+
+// Export par défaut au cas où
+export default destinationsService;

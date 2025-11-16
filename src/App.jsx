@@ -1,28 +1,37 @@
-// App.jsx - Version Propre Sans Destinations
+// App.jsx - Version COMPLÈTE avec Destinations
 import React, { useState, useEffect } from 'react';
 
 // Layout
-import Navbar from './Components/Layout/Navbar';
+import Navbar from './components/Layout/Navbar';
 
 // Dashboard
-import Dashboard from './Components/Dashboard/Dashboard';
+import Dashboard from './components/Dashboard/Dashboard';
 
 // Drivers
-import DriversList from './Components/Drivers/DriversList';
-import DriverForm from './Components/Drivers/DriverForm';
+import DriversList from './components/Drivers/DriversList';
+import DriverForm from './components/Drivers/DriverForm';
 
 // Loads
-import LoadsList from './Components/Loads/LoadsList';
-import LoadForm from './Components/Loads/LoadForm';
+import LoadsList from './components/Loads/LoadsList';
+import LoadForm from './components/Loads/LoadForm';
 
 // Payments
-import PaymentModal from './Components/Payments/PaymentModal';
+import PaymentModal from './components/Payments/PaymentModal';
+
+// Initialisation
+import InitDestinations from './components/InitDestinations';
 
 // Services
 import { driverService, loadService, paymentService } from './services/supabase.service';
 
+// Hooks
+import { useDestinations } from './hooks/useDestinations';
+
 // Utils
 import { calculateGlobalStats, getRemainingBalance } from './utils/calculations';
+
+// Données de secours
+import { fallbackDestinations } from './data/fallbackDestinations';
 
 const App = () => {
   // États principaux
@@ -37,12 +46,30 @@ const App = () => {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Formulaire Chargement - SANS destinations
+  // Hook pour les destinations
+  const { 
+    destinations, 
+    loading: destinationsLoading, 
+    error: destinationsError, 
+    isEmpty: destinationsEmpty,
+    refetch: refetchDestinations 
+  } = useDestinations();
+
+  // État pour l'initialisation
+  const [showInitModal, setShowInitModal] = useState(false);
+
+  // Utiliser les données de secours si la table est vide
+  const actualDestinations = destinations.length > 0 ? destinations : fallbackDestinations;
+
+  // Formulaire Chargement - AVEC destinations
   const [loadFormData, setLoadFormData] = useState({
     driverName: '',
-    origin: '',
+    origin: 'Dakar',
     destination: '',
-    totalAmount: '',
+    typeChargement: '',
+    quantite: '',
+    prixParTonne: 0,
+    totalAmount: 0,
     date: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -71,6 +98,13 @@ const App = () => {
     loadAllData();
   }, []);
 
+  // Afficher la modal d'initialisation si la table destinations est vide
+  useEffect(() => {
+    if (!destinationsLoading && destinationsEmpty && destinations.length === 0) {
+      setShowInitModal(true);
+    }
+  }, [destinationsLoading, destinationsEmpty, destinations.length]);
+
   const loadAllData = async () => {
     try {
       const [driversData, loadsData, paymentsData] = await Promise.all([
@@ -86,6 +120,112 @@ const App = () => {
       console.error('Erreur de chargement:', error);
       alert('Erreur lors du chargement des données');
     }
+  };
+
+  const handleInitialized = async () => {
+    setShowInitModal(false);
+    await refetchDestinations();
+    await loadAllData();
+  };
+
+  // ========== GESTION DES CHARGEMENTS AVEC DESTINATIONS ==========
+  
+  const handleLoadSubmit = async () => {
+    if (!loadFormData.driverName || !loadFormData.destination || 
+        !loadFormData.typeChargement || !loadFormData.quantite) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    try {
+      if (selectedLoad) {
+        // Mise à jour
+        await loadService.update(selectedLoad.id, {
+          driver_name: loadFormData.driverName,
+          origin: loadFormData.origin,
+          destination: loadFormData.destination,
+          type_chargement: loadFormData.typeChargement,
+          quantite: parseFloat(loadFormData.quantite),
+          prix_par_tonne: parseFloat(loadFormData.prixParTonne),
+          total_amount: parseFloat(loadFormData.totalAmount),
+          date: loadFormData.date,
+          description: loadFormData.description || ''
+        });
+      } else {
+        // Création
+        const nextNumber = loads.length + 1;
+        const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
+        
+        await loadService.create({
+          driver_name: loadFormData.driverName,
+          load_number: loadNumber,
+          origin: loadFormData.origin,
+          destination: loadFormData.destination,
+          type_chargement: loadFormData.typeChargement,
+          quantite: parseFloat(loadFormData.quantite),
+          prix_par_tonne: parseFloat(loadFormData.prixParTonne),
+          total_amount: parseFloat(loadFormData.totalAmount),
+          date: loadFormData.date,
+          description: loadFormData.description || ''
+        });
+      }
+      
+      await loadAllData();
+      resetLoadForm();
+      setView('loads');
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de l\'enregistrement du chargement');
+    }
+  };
+
+  const handleDeleteLoad = async (id) => {
+    const hasPayments = payments.some(p => (p.load_id || p.loadId) === id);
+    
+    if (hasPayments) {
+      if (!window.confirm('Ce chargement a des paiements associés. Voulez-vous vraiment le supprimer avec tous ses paiements ?')) {
+        return;
+      }
+    }
+
+    try {
+      await loadService.delete(id);
+      await loadAllData();
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la suppression du chargement');
+    }
+  };
+
+  const handleEditLoad = (load) => {
+    setSelectedLoad(load);
+    setLoadFormData({
+      driverName: load.driver_name || load.driverName || '',
+      origin: load.origin || 'Dakar',
+      destination: load.destination || '',
+      typeChargement: load.type_chargement || '',
+      quantite: load.quantite || '',
+      prixParTonne: load.prix_par_tonne || 0,
+      totalAmount: load.total_amount || load.totalAmount || 0,
+      date: load.date || new Date().toISOString().split('T')[0],
+      description: load.description || ''
+    });
+    setView('load-form');
+  };
+
+  const resetLoadForm = () => {
+    setLoadFormData({
+      driverName: '',
+      origin: 'Dakar',
+      destination: '',
+      typeChargement: '',
+      quantite: '',
+      prixParTonne: 0,
+      totalAmount: 0,
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+    setSelectedLoad(null);
   };
 
   // ========== GESTION DES CHAUFFEURS ==========
@@ -182,94 +322,6 @@ const App = () => {
       address: ''
     });
     setSelectedDriver(null);
-  };
-
-  // ========== GESTION DES CHARGEMENTS ==========
-  
-  const handleLoadSubmit = async () => {
-    if (!loadFormData.driverName || !loadFormData.origin || 
-        !loadFormData.destination || !loadFormData.totalAmount) {
-      alert('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
-
-    try {
-      if (selectedLoad) {
-        // Mise à jour
-        await loadService.update(selectedLoad.id, {
-          driver_name: loadFormData.driverName,
-          origin: loadFormData.origin,
-          destination: loadFormData.destination,
-          total_amount: parseFloat(loadFormData.totalAmount),
-          date: loadFormData.date,
-          description: loadFormData.description || ''
-        });
-      } else {
-        // Création
-        const nextNumber = loads.length + 1;
-        const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
-        
-        await loadService.create({
-          driver_name: loadFormData.driverName,
-          load_number: loadNumber,
-          origin: loadFormData.origin,
-          destination: loadFormData.destination,
-          total_amount: parseFloat(loadFormData.totalAmount),
-          date: loadFormData.date,
-          description: loadFormData.description || ''
-        });
-      }
-      
-      await loadAllData();
-      resetLoadForm();
-      setView('loads');
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de l\'enregistrement du chargement');
-    }
-  };
-
-  const handleDeleteLoad = async (id) => {
-    const hasPayments = payments.some(p => (p.load_id || p.loadId) === id);
-    
-    if (hasPayments) {
-      if (!window.confirm('Ce chargement a des paiements associés. Voulez-vous vraiment le supprimer avec tous ses paiements ?')) {
-        return;
-      }
-    }
-
-    try {
-      await loadService.delete(id);
-      await loadAllData();
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la suppression du chargement');
-    }
-  };
-
-  const handleEditLoad = (load) => {
-    setSelectedLoad(load);
-    setLoadFormData({
-      driverName: load.driver_name || load.driverName || '',
-      origin: load.origin || '',
-      destination: load.destination || '',
-      totalAmount: load.total_amount || load.totalAmount || '',
-      date: load.date || '',
-      description: load.description || ''
-    });
-    setView('load-form');
-  };
-
-  const resetLoadForm = () => {
-    setLoadFormData({
-      driverName: '',
-      origin: '',
-      destination: '',
-      totalAmount: '',
-      date: new Date().toISOString().split('T')[0],
-      description: ''
-    });
-    setSelectedLoad(null);
   };
 
   // ========== GESTION DES PAIEMENTS ==========
@@ -407,11 +459,12 @@ const App = () => {
           />
         )}
 
-        {/* Formulaire Chargement - SANS destinations */}
+        {/* Formulaire Chargement - AVEC destinations */}
         {view === 'load-form' && (
           <LoadForm
             formData={loadFormData}
             drivers={drivers}
+            destinations={actualDestinations}
             onChange={setLoadFormData}
             onSubmit={handleLoadSubmit}
             onCancel={() => {
@@ -439,6 +492,11 @@ const App = () => {
             resetPaymentForm();
           }}
         />
+      )}
+
+      {/* Modal d'initialisation des destinations */}
+      {showInitModal && (
+        <InitDestinations onInitialized={handleInitialized} />
       )}
     </div>
   );
