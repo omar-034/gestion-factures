@@ -130,3 +130,58 @@ button {
 .gradient-purple {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
+/* Optimisations spécifiques pour les listes de chargements */
+@media (max-width: 768px) {
+  /* Améliorer l'apparence des cartes sur mobile */
+  .load-card-mobile {
+    margin: 0.5rem 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  /* Empêcher le texte de dépasser */
+  .truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Boutons tactiles optimisés */
+  .touch-button {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Améliorer l'espacement */
+  .mobile-load-spacing > * + * {
+    margin-top: 0.75rem;
+  }
+
+  /* Scroll vertical fluide */
+  .loads-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Animation douce pour l'expansion */
+.load-card-expand {
+  transition: all 0.3s ease-in-out;
+}
+
+/* État de chargement */
+.load-skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

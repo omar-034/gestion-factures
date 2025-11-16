@@ -18,7 +18,7 @@ const LoadsList = ({
   
   if (safeLoads.length === 0 && safePayments.length === 0) {
     return (
-      <div className="bg-white p-12 rounded-lg shadow-md text-center">
+      <div className="bg-white p-8 rounded-lg shadow-md text-center">
         <FileText size={48} className="mx-auto text-gray-400 mb-4" />
         <p className="text-gray-500">Chargement des données...</p>
       </div>
@@ -31,10 +31,9 @@ const LoadsList = ({
   } catch (error) {
     console.error('Erreur enrichissement loads:', error);
     return (
-      <div className="bg-white p-12 rounded-lg shadow-md text-center">
+      <div className="bg-white p-8 rounded-lg shadow-md text-center">
         <FileText size={48} className="mx-auto text-red-400 mb-4" />
         <p className="text-red-500">Erreur lors du chargement des chargements</p>
-        <p className="text-sm text-gray-500 mt-2">{error.message}</p>
       </div>
     );
   }
@@ -60,27 +59,34 @@ const LoadsList = ({
   });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold">Liste des Chargements</h2>
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow">
-          <Search size={20} className="text-gray-400" />
+    <div className="space-y-4">
+      {/* En-tête optimisé mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Chargements</h2>
+          <p className="text-gray-500 text-sm">{filteredLoads.length} chargement(s)</p>
+        </div>
+        
+        {/* Barre de recherche mobile */}
+        <div className="relative w-full sm:w-auto">
+          <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Rechercher..."
             value={searchTerm}
             onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-            className="outline-none"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
       </div>
 
-      <div className="space-y-4">
+      {/* Liste des chargements - version mobile compacte */}
+      <div className="space-y-3">
         {filteredLoads.length === 0 ? (
-          <div className="bg-white p-12 rounded-lg shadow-md text-center">
+          <div className="bg-white p-8 rounded-lg shadow text-center">
             <FileText size={48} className="mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">
-              {searchTerm ? 'Aucun chargement trouvé pour cette recherche' : 'Aucun chargement enregistré'}
+              {searchTerm ? 'Aucun chargement trouvé' : 'Aucun chargement enregistré'}
             </p>
           </div>
         ) : (
@@ -104,8 +110,8 @@ const LoadsList = ({
             } catch (error) {
               console.error('Erreur affichage load:', load.id, error);
               return (
-                <div key={load.id} className="bg-red-50 p-4 rounded">
-                  <p className="text-red-600">Erreur d'affichage du chargement</p>
+                <div key={load.id} className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <p className="text-red-600 text-sm">Erreur d'affichage du chargement</p>
                 </div>
               );
             }

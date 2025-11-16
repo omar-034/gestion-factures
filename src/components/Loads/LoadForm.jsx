@@ -62,11 +62,13 @@ const LoadForm = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6">
+    <div className="max-w-2xl mx-auto px-3 sm:px-0">
+      {/* En-tête responsive */}
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6">
         {isEditing ? 'Modifier le Chargement' : 'Nouveau Chargement'}
       </h2>
-      <div className="bg-white p-8 rounded-lg shadow-md space-y-4">
+      
+      <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md space-y-4 sm:space-y-6">
         {/* Sélection du chauffeur */}
         <div>
           <label className="block text-sm font-semibold mb-2">
@@ -75,7 +77,7 @@ const LoadForm = ({
           <select
             value={formData.driverName || ''}
             onChange={(e) => onChange({...formData, driverName: e.target.value})}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
           >
             <option value="">Sélectionnez un chauffeur</option>
             {drivers.map(driver => (
@@ -89,22 +91,22 @@ const LoadForm = ({
             <button 
               onClick={onAddDriver} 
               type="button"
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline text-sm"
             >
               Ajouter un chauffeur
             </button>
           </p>
         </div>
 
-        {/* Origine et Destination */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Origine et Destination - Grille responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2">Origine *</label>
             <input
               type="text"
               value={formData.origin || 'Dakar'}
               onChange={(e) => onChange({...formData, origin: e.target.value})}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-base"
               placeholder="Dakar"
               readOnly
             />
@@ -114,7 +116,7 @@ const LoadForm = ({
             <select
               value={formData.destination || ''}
               onChange={(e) => handleDestinationChange(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
             >
               <option value="">Sélectionnez une destination</option>
               {destinations.length === 0 ? (
@@ -135,8 +137,8 @@ const LoadForm = ({
           </div>
         </div>
 
-        {/* Type de chargement et Quantité */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Type de chargement et Quantité - Grille responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2">
               Type de Chargement *
@@ -145,7 +147,7 @@ const LoadForm = ({
               type="text"
               value={formData.typeChargement || ''}
               onChange={(e) => onChange({...formData, typeChargement: e.target.value})}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
               placeholder="Ex: Ciment, Sable, Gravier..."
             />
           </div>
@@ -159,14 +161,14 @@ const LoadForm = ({
               min="0"
               value={formData.quantite || ''}
               onChange={(e) => onChange({...formData, quantite: e.target.value})}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
               placeholder="Ex: 10"
             />
           </div>
         </div>
 
-        {/* Prix par tonne et Montant Total */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Prix par tonne et Montant Total - Grille responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2">
               Prix par Tonne (FCFA)
@@ -174,7 +176,7 @@ const LoadForm = ({
             <input
               type="text"
               value={formatPrice(formData.prixParTonne)}
-              className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 font-semibold"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg bg-gray-50 text-gray-600 font-semibold text-base"
               readOnly
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -188,7 +190,7 @@ const LoadForm = ({
             <input
               type="text"
               value={formatPrice(formData.totalAmount)}
-              className="w-full px-4 py-2 border rounded-lg bg-blue-50 text-blue-700 font-bold text-lg"
+              className="w-full px-3 sm:px-4 py-3 border rounded-lg bg-blue-50 text-blue-700 font-bold text-base sm:text-lg"
               readOnly
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -207,7 +209,7 @@ const LoadForm = ({
             type="date"
             value={formData.date || ''}
             onChange={(e) => onChange({...formData, date: e.target.value})}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
           />
         </div>
 
@@ -219,7 +221,7 @@ const LoadForm = ({
           <textarea
             value={formData.description || ''}
             onChange={(e) => onChange({...formData, description: e.target.value})}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
             rows="3"
             placeholder="Détails sur le chargement: point de départ précis, instructions spéciales, etc..."
           />
@@ -227,26 +229,26 @@ const LoadForm = ({
 
         {/* Récapitulatif */}
         {formData.quantite && formData.destination && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
-            <h4 className="font-semibold text-gray-700 mb-2">📋 Récapitulatif</h4>
-            <div className="space-y-1 text-sm">
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 sm:p-4 rounded-lg border border-green-200">
+            <h4 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">📋 Récapitulatif</h4>
+            <div className="space-y-1 text-xs sm:text-sm">
               <p><span className="font-semibold">Trajet:</span> {formData.origin} → {formData.destination}</p>
               <p><span className="font-semibold">Type:</span> {formData.typeChargement || 'Non spécifié'}</p>
               <p><span className="font-semibold">Quantité:</span> {formData.quantite} tonnes</p>
               <p><span className="font-semibold">Prix/tonne:</span> {formatPrice(formData.prixParTonne)} FCFA</p>
-              <p className="text-lg font-bold text-green-700 mt-2">
+              <p className="font-bold text-green-700 mt-2 text-sm sm:text-base">
                 💰 Total: {formatPrice(formData.totalAmount)} FCFA
               </p>
             </div>
           </div>
         )}
 
-        {/* Boutons d'action */}
-        <div className="flex gap-4 pt-4">
+        {/* Boutons d'action - Responsive */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <button
             onClick={onSubmit}
             type="button"
-            className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed text-base touch-button"
             disabled={!formData.driverName || !formData.destination || !formData.quantite || !formData.typeChargement}
           >
             {isEditing ? 'Mettre à jour' : 'Créer le Chargement'}
@@ -254,7 +256,7 @@ const LoadForm = ({
           <button
             onClick={onCancel}
             type="button"
-            className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition font-semibold"
+            className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition font-semibold text-base touch-button"
           >
             Annuler
           </button>
