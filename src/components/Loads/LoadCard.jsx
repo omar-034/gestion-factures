@@ -1,3 +1,4 @@
+// components/Loads/LoadCard.jsx
 import React from 'react';
 import { Edit2, Trash2, CreditCard } from 'lucide-react';
 import PaymentItem from '../Payments/PaymentItem';
@@ -11,7 +12,7 @@ const LoadCard = ({ load, loadPayments, onEdit, onDelete, onAddPayment, onDelete
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-xl font-bold text-blue-900">
-                Chargement #{load.loadNumber || load.load_number}
+                Chargement #{load.loadNumber}
               </h3>
               <span className={`px-3 py-1 rounded text-sm font-semibold ${
                 load.status === 'Payé' ? 'bg-green-500 text-white' : 
@@ -21,8 +22,16 @@ const LoadCard = ({ load, loadPayments, onEdit, onDelete, onAddPayment, onDelete
                 {load.status}
               </span>
             </div>
-            <p className="text-gray-700 font-semibold">{load.driverName || load.driver_name}</p>
-            <p className="text-gray-600 text-sm">{load.origin} → {load.destination}</p>
+            <p className="text-gray-700 font-semibold">{load.driverName}</p>
+            <p className="text-gray-600 text-sm">
+              {load.origin} → {load.destination}
+              {load.type_chargement && ` • ${load.type_chargement}`}
+            </p>
+            {load.quantite && (
+              <p className="text-blue-600 text-sm font-semibold">
+                📦 {load.quantite} tonnes × {parseFloat(load.prix_par_tonne || 0).toLocaleString()} FCFA/tonne
+              </p>
+            )}
             <p className="text-gray-500 text-xs mt-1">
               Date: {new Date(load.date).toLocaleDateString('fr-FR')}
             </p>
@@ -60,29 +69,29 @@ const LoadCard = ({ load, loadPayments, onEdit, onDelete, onAddPayment, onDelete
         <div>
           <p className="text-xs text-gray-500 uppercase">Montant Total</p>
           <p className="text-lg font-bold text-blue-600">
-            {parseFloat(load.totalAmount || load.total_amount).toFixed(2)} FCFA
+            {parseFloat(load.totalAmount).toFixed(2)} FCFA
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 uppercase">Total Payé</p>
           <p className="text-lg font-bold text-green-600">
-            {(load.totalPaid || 0).toFixed(2)} FCFA
+            {load.totalPaid.toFixed(2)} FCFA
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 uppercase">Solde Restant</p>
           <p className="text-lg font-bold text-orange-600">
-            {(load.remaining || 0).toFixed(2)} FCFA
+            {load.remaining.toFixed(2)} FCFA
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 uppercase">Paiements</p>
-          <p className="text-lg font-bold text-gray-700">{load.paymentsCount || 0}</p>
+          <p className="text-lg font-bold text-gray-700">{load.paymentsCount}</p>
         </div>
       </div>
 
       {/* Historique des paiements */}
-      {loadPayments && loadPayments.length > 0 && (
+      {loadPayments.length > 0 && (
         <div className="p-6">
           <h4 className="font-bold mb-3 text-gray-700">Historique des Paiements</h4>
           <div className="space-y-2">

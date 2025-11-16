@@ -1,44 +1,108 @@
 // components/Layout/Navbar.jsx
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Menu, X, Home, Users, Package } from 'lucide-react';
 
 const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const menuItems = [
+    { id: 'dashboard', label: 'Accueil', icon: Home },
+    { id: 'drivers', label: 'Chauffeurs', icon: Users },
+    { id: 'loads', label: 'Chargements', icon: Package }
+  ];
+
+  const handleNavigation = (view) => {
+    onViewChange(view);
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="bg-blue-600 text-white p-4 shadow-lg">
-      <div className="container mx-auto flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Gestion Factures Transport</h1>
-        <div className="flex gap-4">
+    <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-2xl sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        {/* Desktop & Tablet Navigation */}
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="bg-white p-2 rounded-lg">
+              <Package className="text-blue-600" size={24} />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold">Transport Manager</h1>
+              <p className="text-xs text-blue-200">Gestion simplifiée</p>
+            </div>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-2">
+            {menuItems.map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigation(item.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                    currentView === item.id 
+                      ? 'bg-white text-blue-600 shadow-lg transform scale-105' 
+                      : 'hover:bg-blue-700 hover:shadow-md'
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+            
+            <button
+              onClick={onNewLoad}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl ml-2"
+            >
+              <Plus size={18} />
+              <span className="font-medium">Nouveau</span>
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
           <button
-            onClick={() => onViewChange('dashboard')}
-            className={`px-4 py-2 rounded transition ${
-              currentView === 'dashboard' ? 'bg-blue-700' : 'hover:bg-blue-500'
-            }`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 hover:bg-blue-700 rounded-lg transition"
           >
-            Dashboard
-          </button>
-          <button
-            onClick={() => onViewChange('drivers')}
-            className={`px-4 py-2 rounded transition ${
-              currentView === 'drivers' ? 'bg-blue-700' : 'hover:bg-blue-500'
-            }`}
-          >
-            Chauffeurs
-          </button>
-          <button
-            onClick={() => onViewChange('loads')}
-            className={`px-4 py-2 rounded transition ${
-              currentView === 'loads' ? 'bg-blue-700' : 'hover:bg-blue-500'
-            }`}
-          >
-            Chargements
-          </button>
-          <button
-            onClick={onNewLoad}
-            className="px-4 py-2 bg-green-500 rounded hover:bg-green-600 transition flex items-center gap-2"
-          >
-            <Plus size={20} /> Nouveau Chargement
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden pb-4 space-y-2 animate-fadeIn">
+            {menuItems.map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigation(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                    currentView === item.id 
+                      ? 'bg-white text-blue-600 shadow-lg' 
+                      : 'bg-blue-700 hover:bg-blue-600'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+            
+            <button
+              onClick={() => {
+                onNewLoad();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-green-500 rounded-lg hover:bg-green-600 transition shadow-lg"
+            >
+              <Plus size={20} />
+              <span className="font-medium">Nouveau Chargement</span>
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

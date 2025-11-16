@@ -1,3 +1,4 @@
+// App.jsx - Version Propre Sans Destinations
 import React, { useState, useEffect } from 'react';
 
 // Layout
@@ -16,8 +17,6 @@ import LoadForm from './Components/Loads/LoadForm';
 
 // Payments
 import PaymentModal from './Components/Payments/PaymentModal';
-
-
 
 // Services
 import { driverService, loadService, paymentService } from './services/supabase.service';
@@ -38,10 +37,9 @@ const App = () => {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Formulaire Chargement
+  // Formulaire Chargement - SANS destinations
   const [loadFormData, setLoadFormData] = useState({
     driverName: '',
-    loadNumber: '',
     origin: '',
     destination: '',
     totalAmount: '',
@@ -81,9 +79,9 @@ const App = () => {
         paymentService.getAll()
       ]);
       
-      setDrivers(driversData);
-      setLoads(loadsData);
-      setPayments(paymentsData);
+      setDrivers(driversData || []);
+      setLoads(loadsData || []);
+      setPayments(paymentsData || []);
     } catch (error) {
       console.error('Erreur de chargement:', error);
       alert('Erreur lors du chargement des données');
@@ -164,9 +162,9 @@ const App = () => {
     setDriverFormData({
       name: driver.name,
       phone: driver.phone,
-      licenseNumber: driver.license_number || driver.licenseNumber || '',
-      vehicleType: driver.vehicle_type || driver.vehicleType || '',
-      vehiclePlate: driver.vehicle_plate || driver.vehiclePlate || '',
+      licenseNumber: driver.license_number || '',
+      vehicleType: driver.vehicle_type || '',
+      vehiclePlate: driver.vehicle_plate || '',
       status: driver.status || 'Actif',
       address: driver.address || ''
     });
@@ -197,15 +195,17 @@ const App = () => {
 
     try {
       if (selectedLoad) {
+        // Mise à jour
         await loadService.update(selectedLoad.id, {
           driver_name: loadFormData.driverName,
           origin: loadFormData.origin,
           destination: loadFormData.destination,
-          total_amount: loadFormData.totalAmount,
+          total_amount: parseFloat(loadFormData.totalAmount),
           date: loadFormData.date,
-          description: loadFormData.description
+          description: loadFormData.description || ''
         });
       } else {
+        // Création
         const nextNumber = loads.length + 1;
         const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
         
@@ -214,9 +214,9 @@ const App = () => {
           load_number: loadNumber,
           origin: loadFormData.origin,
           destination: loadFormData.destination,
-          total_amount: loadFormData.totalAmount,
+          total_amount: parseFloat(loadFormData.totalAmount),
           date: loadFormData.date,
-          description: loadFormData.description
+          description: loadFormData.description || ''
         });
       }
       
@@ -250,12 +250,11 @@ const App = () => {
   const handleEditLoad = (load) => {
     setSelectedLoad(load);
     setLoadFormData({
-      driverName: load.driver_name || load.driverName,
-      loadNumber: load.load_number || load.loadNumber,
-      origin: load.origin,
-      destination: load.destination,
-      totalAmount: load.total_amount || load.totalAmount,
-      date: load.date,
+      driverName: load.driver_name || load.driverName || '',
+      origin: load.origin || '',
+      destination: load.destination || '',
+      totalAmount: load.total_amount || load.totalAmount || '',
+      date: load.date || '',
       description: load.description || ''
     });
     setView('load-form');
@@ -264,7 +263,6 @@ const App = () => {
   const resetLoadForm = () => {
     setLoadFormData({
       driverName: '',
-      loadNumber: '',
       origin: '',
       destination: '',
       totalAmount: '',
@@ -301,7 +299,7 @@ const App = () => {
         amount: parseFloat(paymentFormData.amount),
         date: paymentFormData.date,
         payment_method: paymentFormData.paymentMethod,
-        note: paymentFormData.note
+        note: paymentFormData.note || ''
       });
 
       await loadAllData();
@@ -353,7 +351,7 @@ const App = () => {
         }}
       />
 
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         {/* Dashboard */}
         {view === 'dashboard' && (
           <Dashboard
@@ -409,7 +407,7 @@ const App = () => {
           />
         )}
 
-        {/* Formulaire Chargement */}
+        {/* Formulaire Chargement - SANS destinations */}
         {view === 'load-form' && (
           <LoadForm
             formData={loadFormData}
@@ -420,14 +418,16 @@ const App = () => {
               resetLoadForm();
               setView('loads');
             }}
-            onAddDriver={() => setView('driver-form')}
+            onAddDriver={() => {
+              setView('driver-form');
+            }}
             isEditing={!!selectedLoad}
           />
         )}
       </div>
 
       {/* Modal de Paiement */}
-      {showPaymentModal && (
+      {showPaymentModal && selectedLoad && (
         <PaymentModal
           selectedLoad={selectedLoad}
           payments={payments}
