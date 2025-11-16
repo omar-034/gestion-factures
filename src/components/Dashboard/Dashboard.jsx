@@ -14,6 +14,38 @@ const Dashboard = ({ loads, drivers, payments, stats }) => {
     new Date(b.lastLoadDate) - new Date(a.lastLoadDate)
   );
 
+  // Fonction pour normaliser la méthode de paiement
+  const getPaymentMethodInfo = (paymentMethod) => {
+    // Debug: afficher la valeur réelle
+    console.log('Méthode de paiement:', paymentMethod);
+    
+    const method = String(paymentMethod || '').toLowerCase().trim();
+    
+    if (method.includes('espèce') || method === 'espèces' || method === 'cash') {
+      return { label: 'Espèces', class: 'bg-blue-100 text-blue-700' };
+    } else if (method.includes('mobile') || method.includes('money')) {
+      return { label: 'Mobile Money', class: 'bg-orange-100 text-orange-700' };
+    } else if (method.includes('virement')) {
+      return { label: 'Virement', class: 'bg-purple-100 text-purple-700' };
+    } else if (method.includes('cheque') || method.includes('chèque')) {
+      return { label: 'Chèque', class: 'bg-green-100 text-green-700' };
+    } else {
+      return { label: `Autre (${paymentMethod})`, class: 'bg-gray-100 text-gray-700' };
+    }
+  };
+
+  // Calculer le montant restant pour chaque paiement
+  const getRemainingAmount = (payment) => {
+    const load = loads.find(l => l.id === (payment.load_id || payment.loadId));
+    if (!load) return 0;
+    
+    const loadTotal = load.total_amount || load.totalAmount || 0;
+    const loadPayments = payments.filter(p => (p.load_id || p.loadId) === load.id);
+    const totalPaid = loadPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    
+    return loadTotal - totalPaid;
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -76,36 +108,46 @@ const Dashboard = ({ loads, drivers, payments, stats }) => {
                 <p className="text-gray-500 text-sm">Aucun paiement enregistré</p>
               </div>
             ) : (
-              recentPayments.map(payment => (
-                <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-green-50 rounded-lg hover:shadow-md transition border border-gray-100">
-                  <div className="flex-1 mb-2 sm:mb-0">
-                    <p className="font-semibold text-gray-800">{payment.driverName}</p>
-                    <p className="text-xs sm:text-sm text-gray-500">Chargement #{payment.loadNumber}</p>
-                    <p className="text-xs text-gray-400">{payment.origin} → {payment.destination}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(payment.created_at || payment.date).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
+              recentPayments.map(payment => {
+                const methodInfo = getPaymentMethodInfo(payment.paymentMethod);
+                const remainingAmount = getRemainingAmount(payment);
+                
+                return (
+                  <div
+                    key={payment.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-green-50 rounded-lg hover:shadow-md transition border border-gray-100"
+                  >
+                    <div className="flex-1 mb-2 sm:mb-0">
+                      <p className="font-semibold text-gray-800">{payment.driverName}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Chargement #{payment.loadNumber}</p>
+                      <p className="text-xs text-gray-400">{payment.origin} → {payment.destination}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(payment.created_at || payment.date).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <p className="font-bold text-green-600 text-sm sm:text-base">
+                        {formatNumber(payment.amount)} FCFA
+                      </p>
+                      <p className="text-xs sm:text-sm text-blue-600">
+                        Total: {formatNumber(payment.loadTotal)} FCFA
+                      </p>
+                      <p className="text-xs sm:text-sm text-orange-600 font-semibold">
+                        Reste: {formatNumber(remainingAmount)} FCFA
+                      </p>
+                      <span className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${methodInfo.class}`}>
+                        {methodInfo.label}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-left sm:text-right">
-                    <p className="font-bold text-green-600 text-sm sm:text-base">{formatNumber(payment.amount)} FCFA</p>
-                    <p className="text-xs sm:text-sm text-blue-600">Total: {formatNumber(payment.loadTotal)} FCFA</p>
-                    <span className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${
-                      payment.paymentMethod === 'cash' ? 'bg-blue-100 text-blue-700' : 
-                      payment.paymentMethod === 'transfer' ? 'bg-purple-100 text-purple-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {payment.paymentMethod === 'cash' ? 'Espèces' : 
-                       payment.paymentMethod === 'transfer' ? 'Virement' : 'Autre'}
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
