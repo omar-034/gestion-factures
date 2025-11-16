@@ -1,0 +1,166 @@
+{
+  "destinations": [
+    {
+      "id": 1,
+      "region": "Sédhiou",
+      "ville": "Sédhiou",
+      "prixParTonne": 11000
+    },
+    {
+      "id": 2,
+      "region": "Sédhiou",
+      "ville": "Goudomp",
+      "prixParTonne": 13000
+    },
+    {
+      "id": 3,
+      "region": "Sédhiou",
+      "ville": "Boukiling",
+      "prixParTonne": 9000
+    },
+    {
+      "id": 4,
+      "region": "Kédougou",
+      "ville": "Saraya",
+      "prixParTonne": 21000
+    },
+    {
+      "id": 5,
+      "region": "Kédougou",
+      "ville": "Salemata",
+      "prixParTonne": 22000
+    },
+    {
+      "id": 6,
+      "region": "Kédougou",
+      "ville": "Kedougou",
+      "prixParTonne": 18000
+    },
+    {
+      "id": 7,
+      "region": "Kédougou",
+      "ville": "Kounguel",
+      "prixParTonne": 8000
+    },
+    {
+      "id": 8,
+      "region": "Kaffrine",
+      "ville": "Malem hodar",
+      "prixParTonne": 6500
+    },
+    {
+      "id": 9,
+      "region": "Kaffrine",
+      "ville": "Kaffrine",
+      "prixParTonne": 6000
+    },
+    {
+      "id": 10,
+      "region": "Kaffrine",
+      "ville": "Mbirkilane",
+      "prixParTonne": 4500
+    },
+    {
+      "id": 11,
+      "region": "Ziguinchor",
+      "ville": "Kabrousse",
+      "prixParTonne": 13000
+    },
+    {
+      "id": 12,
+      "region": "Ziguinchor",
+      "ville": "Bignona",
+      "prixParTonne": 11000
+    },
+    {
+      "id": 13,
+      "region": "Tambacounda",
+      "ville": "Goudiry",
+      "prixParTonne": 16000
+    },
+    {
+      "id": 14,
+      "region": "Tambacounda",
+      "ville": "Tamba",
+      "prixParTonne": 13000
+    },
+    {
+      "id": 15,
+      "region": "Tambacounda",
+      "ville": "Koumpentoum",
+      "prixParTonne": 9000
+    },
+    {
+      "id": 16,
+      "region": "Tambacounda",
+      "ville": "Backel",
+      "prixParTonne": 17000
+    },
+    {
+      "id": 17,
+      "region": "Saint-Louis",
+      "ville": "Dagana",
+      "prixParTonne": 10500
+    },
+    {
+      "id": 18,
+      "region": "Saint-Louis",
+      "ville": "Ranerou",
+      "prixParTonne": 11000
+    },
+    {
+      "id": 19,
+      "region": "Matam",
+      "ville": "Bokidiawe",
+      "prixParTonne": 15000
+    },
+    {
+      "id": 20,
+      "region": "Matam",
+      "ville": "Kanel",
+      "prixParTonne": 14000
+    },
+    {
+      "id": 21,
+      "region": "Louga",
+      "ville": "Louga",
+      "prixParTonne": 5000
+    },
+    {
+      "id": 22,
+      "region": "Louga",
+      "ville": "Linguere",
+      "prixParTonne": 9000
+    },
+    {
+      "id": 23,
+      "region": "Louga",
+      "ville": "Kebemer",
+      "prixParTonne": 4500
+    },
+    {
+      "id": 24,
+      "region": "Kolda",
+      "ville": "Velingara",
+      "prixParTonne": 15000
+    },
+    {
+      "id": 25,
+      "region": "Kaolack",
+      "ville": "Nioro",
+      "prixParTonne": 5500
+    },
+    {
+      "id": 26,
+      "region": "Fatick",
+      "ville": "Gossas",
+      "prixParTonne": 4500
+    },
+    {
+      "id": 27,
+      "region": "Diourbel",
+      "ville": "Mbacke",
+      "prixParTonne": 4500
+    }
+  ]
+}
