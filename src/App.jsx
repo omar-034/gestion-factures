@@ -450,6 +450,7 @@ const App = () => {
           <LoadsList
             loads={loads}
             payments={payments}
+            drivers={drivers} // ← Ajouter cette ligne
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onEdit={handleEditLoad}

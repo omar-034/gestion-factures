@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, DollarSign, ChevronDown, ChevronUp, Truck, MapPin } from 'lucide-react';
+import { Edit, Trash2, DollarSign, ChevronDown, ChevronUp, Truck, MapPin, Phone } from 'lucide-react';
 
-const LoadCard = ({ load, loadPayments = [], onEdit, onDelete, onAddPayment, onDeletePayment }) => {
+const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAddPayment, onDeletePayment }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
   const formatNumber = (number) => {
@@ -42,6 +42,14 @@ const LoadCard = ({ load, loadPayments = [], onEdit, onDelete, onAddPayment, onD
               </h3>
             </div>
             
+            {/* Numéro de téléphone - NOUVEAU */}
+            <div className="flex items-center gap-2 mb-2">
+              <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
+              <p className="text-xs text-gray-600 truncate">
+                {driverPhone || 'Non renseigné'}
+              </p>
+            </div>
+
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
               <p className="text-xs text-gray-600 truncate">
@@ -96,6 +104,17 @@ const LoadCard = ({ load, loadPayments = [], onEdit, onDelete, onAddPayment, onD
               <p className="text-xs text-gray-500">Quantité</p>
               <p className="text-sm font-medium text-gray-900">
                 {load.quantite ? `${load.quantite} tonnes` : 'Non spécifié'}
+              </p>
+            </div>
+          </div>
+
+          {/* Numéro de téléphone détaillé */}
+          <div className="mb-4">
+            <p className="text-xs text-gray-500">Téléphone du chauffeur</p>
+            <div className="flex items-center gap-2 mt-1">
+              <Phone className="h-4 w-4 text-gray-400" />
+              <p className="text-sm font-medium text-gray-900">
+                {driverPhone || 'Non renseigné'}
               </p>
             </div>
           </div>
