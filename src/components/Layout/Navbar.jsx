@@ -1,12 +1,13 @@
-// components/Layout/Navbar.jsx
+// components/Layout/Navbar.jsx - Mis à jour avec Marchés
 import React, { useState } from 'react';
-import { Plus, Menu, X, Home, Users, Package } from 'lucide-react';
+import { Plus, Menu, X, Home, Users, Package, Briefcase } from 'lucide-react';
 
 const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Accueil', icon: Home },
+    { id: 'marches', label: 'Marchés', icon: Briefcase },
     { id: 'drivers', label: 'Chauffeurs', icon: Users },
     { id: 'loads', label: 'Chargements', icon: Package }
   ];
@@ -41,7 +42,7 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
                   key={item.id}
                   onClick={() => handleNavigation(item.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                    currentView === item.id 
+                    currentView === item.id || currentView.startsWith(item.id)
                       ? 'bg-white text-blue-600 shadow-lg transform scale-105' 
                       : 'hover:bg-blue-700 hover:shadow-md'
                   }`}
@@ -80,7 +81,7 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
                   key={item.id}
                   onClick={() => handleNavigation(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    currentView === item.id 
+                    currentView === item.id || currentView.startsWith(item.id)
                       ? 'bg-white text-blue-600 shadow-lg' 
                       : 'bg-blue-700 hover:bg-blue-600'
                   }`}

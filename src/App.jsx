@@ -1,4 +1,4 @@
-// App.jsx - Version COMPLÈTE avec Destinations
+// App.jsx - Version COMPLÈTE avec Marchés
 import React, { useState, useEffect } from 'react';
 
 // Layout
@@ -18,11 +18,17 @@ import LoadForm from './components/Loads/LoadForm';
 // Payments
 import PaymentModal from './components/Payments/PaymentModal';
 
+// Marchés
+import MarchesList from './components/Marches/MarchesList';
+import MarcheForm from './components/Marches/MarcheForm';
+import MarcheDetails from './components/Marches/MarcheDetails';
+
 // Initialisation
 import InitDestinations from './components/InitDestinations';
 
 // Services
 import { driverService, loadService, paymentService } from './services/supabase.service';
+import { marchesService } from './services/marches.service';
 
 // Hooks
 import { useDestinations } from './hooks/useDestinations';
@@ -38,12 +44,14 @@ const App = () => {
   const [loads, setLoads] = useState([]);
   const [payments, setPayments] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  const [marches, setMarches] = useState([]);
   const [view, setView] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
 
   // États pour la sélection
   const [selectedLoad, setSelectedLoad] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
+  const [selectedMarche, setSelectedMarche] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Hook pour les destinations
@@ -61,9 +69,10 @@ const App = () => {
   // Utiliser les données de secours si la table est vide
   const actualDestinations = destinations.length > 0 ? destinations : fallbackDestinations;
 
-  // Formulaire Chargement - AVEC destinations
+  // Formulaire Chargement
   const [loadFormData, setLoadFormData] = useState({
     driverName: '',
+    marcheId: '',
     origin: 'Dakar',
     destination: '',
     typeChargement: '',
@@ -93,6 +102,17 @@ const App = () => {
     address: ''
   });
 
+  // Formulaire Marché
+  const [marcheFormData, setMarcheFormData] = useState({
+    nom: '',
+    reference: '',
+    date_debut: new Date().toISOString().split('T')[0],
+    date_fin: null, // null au lieu de ''
+    statut: 'En cours',
+    description: '',
+    montant_total: 0
+  });
+
   // Charger toutes les données au démarrage
   useEffect(() => {
     loadAllData();
@@ -107,15 +127,17 @@ const App = () => {
 
   const loadAllData = async () => {
     try {
-      const [driversData, loadsData, paymentsData] = await Promise.all([
+      const [driversData, loadsData, paymentsData, marchesData] = await Promise.all([
         driverService.getAll(),
         loadService.getAll(),
-        paymentService.getAll()
+        paymentService.getAll(),
+        marchesService.getAll()
       ]);
       
       setDrivers(driversData || []);
       setLoads(loadsData || []);
       setPayments(paymentsData || []);
+      setMarches(marchesData || []);
     } catch (error) {
       console.error('Erreur de chargement:', error);
       alert('Erreur lors du chargement des données');
@@ -128,7 +150,87 @@ const App = () => {
     await loadAllData();
   };
 
-  // ========== GESTION DES CHARGEMENTS AVEC DESTINATIONS ==========
+  // ========== GESTION DES MARCHÉS ==========
+  
+  const handleMarcheSubmit = async (destinations) => {
+    if (!marcheFormData.nom || !marcheFormData.reference || !marcheFormData.date_debut) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    try {
+      if (selectedMarche) {
+        // Mise à jour (simplifié - pas de gestion des destinations pour la mise à jour)
+        await marchesService.update(selectedMarche.id, marcheFormData);
+      } else {
+        // Création avec destinations
+        await marchesService.create(marcheFormData, destinations);
+      }
+      
+      await loadAllData();
+      resetMarcheForm();
+      setView('marches');
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de l\'enregistrement du marché');
+    }
+  };
+
+  const handleDeleteMarche = async (id) => {
+    const hasLoads = loads.some(load => load.marche_id === id);
+    
+    if (hasLoads) {
+      if (!window.confirm('Ce marché a des chargements associés. Voulez-vous vraiment le supprimer ?')) {
+        return;
+      }
+    }
+
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce marché ?')) {
+      return;
+    }
+
+    try {
+      await marchesService.delete(id);
+      await loadAllData();
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la suppression du marché');
+    }
+  };
+
+  const handleEditMarche = (marche) => {
+    setSelectedMarche(marche);
+    setMarcheFormData({
+      nom: marche.nom,
+      reference: marche.reference,
+      date_debut: marche.date_debut,
+      date_fin: marche.date_fin || null, // Gérer null correctement
+      statut: marche.statut,
+      description: marche.description || '',
+      montant_total: marche.montant_total || 0
+    });
+    setView('marche-form');
+  };
+
+  const handleViewMarcheDetails = (marche) => {
+    setSelectedMarche(marche);
+    setView('marche-details');
+  };
+
+  const resetMarcheForm = () => {
+    setMarcheFormData({
+      nom: '',
+      reference: '',
+      date_debut: new Date().toISOString().split('T')[0],
+      date_fin: null, // null au lieu de ''
+      statut: 'En cours',
+      description: '',
+      montant_total: 0
+    });
+    setSelectedMarche(null);
+  };
+
+  // ========== GESTION DES CHARGEMENTS ==========
   
   const handleLoadSubmit = async () => {
     if (!loadFormData.driverName || !loadFormData.destination || 
@@ -142,6 +244,7 @@ const App = () => {
         // Mise à jour
         await loadService.update(selectedLoad.id, {
           driver_name: loadFormData.driverName,
+          marche_id: loadFormData.marcheId || null,
           origin: loadFormData.origin,
           destination: loadFormData.destination,
           type_chargement: loadFormData.typeChargement,
@@ -158,6 +261,7 @@ const App = () => {
         
         await loadService.create({
           driver_name: loadFormData.driverName,
+          marche_id: loadFormData.marcheId || null,
           load_number: loadNumber,
           origin: loadFormData.origin,
           destination: loadFormData.destination,
@@ -201,6 +305,7 @@ const App = () => {
     setSelectedLoad(load);
     setLoadFormData({
       driverName: load.driver_name || load.driverName || '',
+      marcheId: load.marche_id || '',
       origin: load.origin || 'Dakar',
       destination: load.destination || '',
       typeChargement: load.type_chargement || '',
@@ -216,6 +321,7 @@ const App = () => {
   const resetLoadForm = () => {
     setLoadFormData({
       driverName: '',
+      marcheId: '',
       origin: 'Dakar',
       destination: '',
       typeChargement: '',
@@ -411,6 +517,7 @@ const App = () => {
             drivers={drivers}
             payments={payments}
             stats={stats}
+            onViewMarcheDetails={handleViewMarcheDetails}
           />
         )}
 
@@ -450,7 +557,7 @@ const App = () => {
           <LoadsList
             loads={loads}
             payments={payments}
-            drivers={drivers} // ← Ajouter cette ligne
+            drivers={drivers}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onEdit={handleEditLoad}
@@ -460,12 +567,13 @@ const App = () => {
           />
         )}
 
-        {/* Formulaire Chargement - AVEC destinations */}
+        {/* Formulaire Chargement */}
         {view === 'load-form' && (
           <LoadForm
             formData={loadFormData}
             drivers={drivers}
             destinations={actualDestinations}
+            marches={marches}
             onChange={setLoadFormData}
             onSubmit={handleLoadSubmit}
             onCancel={() => {
@@ -476,6 +584,43 @@ const App = () => {
               setView('driver-form');
             }}
             isEditing={!!selectedLoad}
+          />
+        )}
+
+        {/* Liste des Marchés */}
+        {view === 'marches' && (
+          <MarchesList
+            onEdit={handleEditMarche}
+            onDelete={handleDeleteMarche}
+            onAddNew={() => {
+              resetMarcheForm();
+              setView('marche-form');
+            }}
+            onViewDetails={handleViewMarcheDetails}
+          />
+        )}
+
+        {/* Formulaire Marché */}
+        {view === 'marche-form' && (
+          <MarcheForm
+            formData={marcheFormData}
+            destinations={selectedMarche?.marche_destinations || []}
+            allDestinations={actualDestinations}
+            onChange={setMarcheFormData}
+            onSubmit={handleMarcheSubmit}
+            onCancel={() => {
+              resetMarcheForm();
+              setView('marches');
+            }}
+            isEditing={!!selectedMarche}
+          />
+        )}
+
+        {/* Détails du Marché */}
+        {view === 'marche-details' && selectedMarche && (
+          <MarcheDetails
+            marcheId={selectedMarche.id}
+            onBack={() => setView('marches')}
           />
         )}
       </div>

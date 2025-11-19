@@ -1,10 +1,11 @@
-// components/Dashboard/Dashboard.jsx
+// components/Dashboard/Dashboard.jsx - Mis à jour avec Marchés
 import React from 'react';
 import { DollarSign, TrendingUp, AlertCircle, Users } from 'lucide-react';
 import StatCard from './StatCard';
+import MarcheDashboard from '../Marches/MarcheDashboard';
 import { getEnrichedLoads, getDriverStats, formatNumber, sortPaymentsByDate, getRecentPayments } from '../../utils/calculations';
 
-const Dashboard = ({ loads, drivers, payments, stats }) => {
+const Dashboard = ({ loads, drivers, payments, stats, onViewMarcheDetails }) => {
   const enrichedLoads = getEnrichedLoads(loads, payments);
   const driverStats = getDriverStats(drivers, loads, payments);
   const recentPayments = getRecentPayments(payments, loads, 5);
@@ -16,9 +17,6 @@ const Dashboard = ({ loads, drivers, payments, stats }) => {
 
   // Fonction pour normaliser la méthode de paiement
   const getPaymentMethodInfo = (paymentMethod) => {
-    // Debug: afficher la valeur réelle
-    console.log('Méthode de paiement:', paymentMethod);
-    
     const method = String(paymentMethod || '').toLowerCase().trim();
     
     if (method.includes('espèce') || method === 'espèces' || method === 'cash') {
@@ -92,9 +90,14 @@ const Dashboard = ({ loads, drivers, payments, stats }) => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Section Marchés Actifs */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        <div className="xl:col-span-1">
+          <MarcheDashboard onViewDetails={onViewMarcheDetails} />
+        </div>
+
         {/* Derniers Paiements */}
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg xl:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-bold text-gray-800">Derniers Paiements</h3>
             <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
@@ -151,48 +154,48 @@ const Dashboard = ({ loads, drivers, payments, stats }) => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Top Chauffeurs */}
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800">Top Chauffeurs</h3>
-            <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
-              {sortedDriverStats.length}
-            </span>
-          </div>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {sortedDriverStats.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-gray-400 mb-2">👤</div>
-                <p className="text-gray-500 text-sm">Aucun chauffeur enregistré</p>
-              </div>
-            ) : (
-              sortedDriverStats.slice(0, 5).map((driver, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg hover:shadow-md transition border border-gray-100">
-                  <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {driver.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 truncate">{driver.name}</p>
-                      <p className="text-xs text-gray-500">{driver.phone}</p>
-                      <p className="text-xs text-gray-400">{driver.totalLoads} chargement(s)</p>
-                      {driver.lastLoadDate && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Dernier: {new Date(driver.lastLoadDate).toLocaleDateString('fr-FR')}
-                        </p>
-                      )}
-                    </div>
+      {/* Top Chauffeurs */}
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800">Top Chauffeurs</h3>
+          <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
+            {sortedDriverStats.length}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+          {sortedDriverStats.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <div className="text-gray-400 mb-2">👤</div>
+              <p className="text-gray-500 text-sm">Aucun chauffeur enregistré</p>
+            </div>
+          ) : (
+            sortedDriverStats.slice(0, 6).map((driver, idx) => (
+              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg hover:shadow-md transition border border-gray-100">
+                <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {driver.name.charAt(0)}
                   </div>
-                  <div className="text-left sm:text-right">
-                    <p className="text-xs sm:text-sm text-gray-600">Total: {formatNumber(driver.totalAmount)} FCFA</p>
-                    <p className="text-xs sm:text-sm text-green-600">Payé: {formatNumber(driver.totalPaid)} FCFA</p>
-                    <p className="font-bold text-orange-600 text-sm">Reste: {formatNumber(driver.remaining)} FCFA</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 truncate">{driver.name}</p>
+                    <p className="text-xs text-gray-500">{driver.phone}</p>
+                    <p className="text-xs text-gray-400">{driver.totalLoads} chargement(s)</p>
+                    {driver.lastLoadDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Dernier: {new Date(driver.lastLoadDate).toLocaleDateString('fr-FR')}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Total: {formatNumber(driver.totalAmount)} FCFA</p>
+                  <p className="text-xs sm:text-sm text-green-600">Payé: {formatNumber(driver.totalPaid)} FCFA</p>
+                  <p className="font-bold text-orange-600 text-sm">Reste: {formatNumber(driver.remaining)} FCFA</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

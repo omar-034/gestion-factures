@@ -1,3 +1,4 @@
+// services/supabase.service.js - Mis à jour avec marche_id
 import { supabase } from '../supabaseClient';
 
 // Service des chauffeurs
@@ -66,6 +67,7 @@ export const loadService = {
       .from('loads')
       .insert([{
         driver_name: loadData.driverName || loadData.driver_name,
+        marche_id: loadData.marcheId || loadData.marche_id || null,
         load_number: loadData.loadNumber || loadData.load_number,
         origin: loadData.origin,
         destination: loadData.destination,
@@ -87,6 +89,7 @@ export const loadService = {
       .from('loads')
       .update({
         driver_name: loadData.driverName || loadData.driver_name,
+        marche_id: loadData.marcheId || loadData.marche_id || null,
         origin: loadData.origin,
         destination: loadData.destination,
         type_chargement: loadData.typeChargement || loadData.type_chargement,
@@ -109,6 +112,17 @@ export const loadService = {
       .delete()
       .eq('id', id);
     if (error) throw error;
+  },
+
+  // Obtenir les chargements d'un marché spécifique
+  async getByMarche(marcheId) {
+    const { data, error } = await supabase
+      .from('loads')
+      .select('*')
+      .eq('marche_id', marcheId)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return data || [];
   }
 };
 

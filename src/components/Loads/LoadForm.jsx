@@ -1,3 +1,4 @@
+// components/Loads/LoadForm.jsx - Mis à jour avec Marchés
 import React, { useEffect } from 'react';
 import { destinationsService } from '../../services/destinations.service';
 
@@ -5,6 +6,7 @@ const LoadForm = ({
   formData, 
   drivers = [],
   destinations = [],
+  marches = [],
   onChange, 
   onSubmit, 
   onCancel, 
@@ -31,12 +33,10 @@ const LoadForm = ({
     try {
       let prixParTonne = 0;
       
-      // Essayer d'abord avec les destinations en mémoire
       const destinationFromMemory = destinations.find(d => d.region === region);
       if (destinationFromMemory) {
         prixParTonne = destinationFromMemory.prix_par_tonne;
       } else {
-        // Fallback: chercher directement dans la base de données
         prixParTonne = await destinationsService.getPrixParTonne(region);
       }
       
@@ -47,7 +47,6 @@ const LoadForm = ({
       });
     } catch (error) {
       console.error('Erreur lors de la récupération du prix:', error);
-      // Utiliser une valeur par défaut en cas d'erreur
       onChange({
         ...formData,
         destination: region,
@@ -61,6 +60,25 @@ const LoadForm = ({
     return parseFloat(price || 0).toLocaleString('fr-FR');
   };
 
+  // Obtenir les destinations disponibles pour le marché sélectionné
+  const getAvailableDestinations = () => {
+    if (!formData.marcheId) {
+      return destinations;
+    }
+    
+    const selectedMarche = marches.find(m => m.id === formData.marcheId);
+    if (!selectedMarche || !selectedMarche.marche_destinations) {
+      return destinations;
+    }
+    
+    // Filtrer les destinations qui font partie du marché
+    const marcheDestNames = selectedMarche.marche_destinations.map(d => d.destination);
+    return destinations.filter(d => marcheDestNames.includes(d.region));
+  };
+
+  const availableDestinations = getAvailableDestinations();
+  const marchesActifs = marches.filter(m => m.statut === 'En cours');
+
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-0">
       {/* En-tête responsive */}
@@ -69,6 +87,38 @@ const LoadForm = ({
       </h2>
       
       <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md space-y-4 sm:space-y-6">
+        {/* Sélection du marché (optionnel) */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <label className="block text-sm font-semibold mb-2 flex items-center gap-2">
+            <span>📋 Marché associé (optionnel)</span>
+          </label>
+          <select
+            value={formData.marcheId || ''}
+            onChange={(e) => {
+              const newMarcheId = e.target.value;
+              onChange({
+                ...formData, 
+                marcheId: newMarcheId,
+                // Réinitialiser la destination si elle n'est plus valide pour le nouveau marché
+                destination: ''
+              });
+            }}
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+          >
+            <option value="">Aucun marché (chargement indépendant)</option>
+            {marchesActifs.map(marche => (
+              <option key={marche.id} value={marche.id}>
+                {marche.nom} ({marche.reference})
+              </option>
+            ))}
+          </select>
+          {formData.marcheId && (
+            <p className="text-xs text-blue-600 mt-2">
+              ✓ Ce chargement comptera pour l'exécution du marché sélectionné
+            </p>
+          )}
+        </div>
+
         {/* Sélection du chauffeur */}
         <div>
           <label className="block text-sm font-semibold mb-2">
@@ -112,26 +162,32 @@ const LoadForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2">Destination *</label>
+            <label className="block text-sm font-semibold mb-2">
+              Destination * {formData.marcheId && '(selon marché)'}
+            </label>
             <select
               value={formData.destination || ''}
               onChange={(e) => handleDestinationChange(e.target.value)}
               className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
             >
               <option value="">Sélectionnez une destination</option>
-              {destinations.length === 0 ? (
-                <option disabled>Chargement des destinations...</option>
+              {availableDestinations.length === 0 ? (
+                <option disabled>
+                  {formData.marcheId 
+                    ? 'Aucune destination pour ce marché' 
+                    : 'Chargement des destinations...'}
+                </option>
               ) : (
-                destinations.map(dest => (
+                availableDestinations.map(dest => (
                   <option key={dest.id} value={dest.region}>
                     {dest.region} - {formatPrice(dest.prix_par_tonne)} FCFA/tonne
                   </option>
                 ))
               )}
             </select>
-            {destinations.length === 0 && (
-              <p className="text-xs text-orange-500 mt-1">
-                ⚠️ Les destinations ne sont pas encore chargées
+            {formData.marcheId && availableDestinations.length > 0 && (
+              <p className="text-xs text-blue-600 mt-1">
+                Uniquement les destinations du marché
               </p>
             )}
           </div>
@@ -232,6 +288,11 @@ const LoadForm = ({
           <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 sm:p-4 rounded-lg border border-green-200">
             <h4 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">📋 Récapitulatif</h4>
             <div className="space-y-1 text-xs sm:text-sm">
+              {formData.marcheId && (
+                <p className="text-blue-600 font-semibold">
+                  🏢 Marché: {marches.find(m => m.id === formData.marcheId)?.nom}
+                </p>
+              )}
               <p><span className="font-semibold">Trajet:</span> {formData.origin} → {formData.destination}</p>
               <p><span className="font-semibold">Type:</span> {formData.typeChargement || 'Non spécifié'}</p>
               <p><span className="font-semibold">Quantité:</span> {formData.quantite} tonnes</p>
