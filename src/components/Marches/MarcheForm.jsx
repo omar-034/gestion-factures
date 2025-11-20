@@ -1,5 +1,5 @@
 // src/components/Marches/MarcheForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 
 const MarcheForm = ({ 
@@ -13,6 +13,14 @@ const MarcheForm = ({
 }) => {
   const [localDestinations, setLocalDestinations] = useState(destinations);
   const [newDest, setNewDest] = useState({ destination: '', quantite_requise: 1 });
+
+  // Initialiser les destinations lors de l'édition
+  useEffect(() => {
+    if (isEditing && destinations && destinations.length > 0) {
+      console.log('📝 Chargement destinations pour édition:', destinations);
+      setLocalDestinations(destinations);
+    }
+  }, [isEditing, destinations]);
 
   const handleAddDestination = () => {
     if (!newDest.destination || newDest.quantite_requise < 1) {
@@ -39,6 +47,8 @@ const MarcheForm = ({
       alert('Veuillez ajouter au moins une destination');
       return;
     }
+    
+    console.log('📤 Envoi des destinations:', localDestinations);
     onSubmit(localDestinations);
   };
 
@@ -156,6 +166,16 @@ const MarcheForm = ({
             <AlertCircle className="text-blue-600" size={20} />
             Destinations à livrer
           </h3>
+
+          {isEditing && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                ℹ️ <strong>Mode édition :</strong> Les destinations existantes sont chargées. 
+                Vous pouvez ajouter de nouvelles destinations ou supprimer des existantes. 
+                Les modifications seront enregistrées lors de la sauvegarde.
+              </p>
+            </div>
+          )}
 
           {/* Formulaire d'ajout de destination */}
           <div className="bg-blue-50 p-4 rounded-lg mb-4">

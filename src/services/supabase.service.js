@@ -63,25 +63,42 @@ export const loadService = {
   },
 
   async create(loadData) {
+    console.log('🔵 loadService.create - données reçues:', loadData);
+    
+    const insertData = {
+      driver_name: loadData.driver_name || loadData.driverName,
+      load_number: loadData.load_number || loadData.loadNumber,
+      origin: loadData.origin,
+      destination: loadData.destination,
+      type_chargement: loadData.type_chargement || loadData.typeChargement,
+      quantite: loadData.quantite ? parseFloat(loadData.quantite) : null,
+      prix_par_tonne: (loadData.prix_par_tonne || loadData.prixParTonne) ? 
+        parseFloat(loadData.prix_par_tonne || loadData.prixParTonne) : null,
+      total_amount: (loadData.total_amount || loadData.totalAmount) ? 
+        parseFloat(loadData.total_amount || loadData.totalAmount) : null,
+      date: loadData.date,
+      description: loadData.description || ''
+    };
+
+    // Ajouter marche_id seulement s'il existe et n'est pas vide
+    if (loadData.marche_id || loadData.marcheId) {
+      insertData.marche_id = loadData.marche_id || loadData.marcheId;
+    }
+
+    console.log('🔵 loadService.create - données à insérer:', insertData);
+
     const { data, error } = await supabase
       .from('loads')
-      .insert([{
-        driver_name: loadData.driverName || loadData.driver_name,
-        marche_id: loadData.marcheId || loadData.marche_id || null,
-        load_number: loadData.loadNumber || loadData.load_number,
-        origin: loadData.origin,
-        destination: loadData.destination,
-        type_chargement: loadData.typeChargement || loadData.type_chargement,
-        quantite: loadData.quantite ? parseFloat(loadData.quantite) : null,
-        prix_par_tonne: loadData.prixParTonne || loadData.prix_par_tonne ? parseFloat(loadData.prixParTonne || loadData.prix_par_tonne) : null,
-        total_amount: loadData.totalAmount || loadData.total_amount ? parseFloat(loadData.totalAmount || loadData.total_amount) : null,
-        date: loadData.date,
-        description: loadData.description || ''
-      }])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+      .insert([insertData])
+      .select();
+    
+    if (error) {
+      console.error('❌ Erreur insertion:', error);
+      throw error;
+    }
+    
+    console.log('✅ loadService.create - succès:', data);
+    return data[0];
   },
 
   async update(id, loadData) {

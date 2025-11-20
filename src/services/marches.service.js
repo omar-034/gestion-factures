@@ -88,24 +88,64 @@ export const marchesService = {
   },
 
   // Mettre à jour un marché
-  async update(id, marcheData) {
-    const { data, error } = await supabase
-      .from('marches')
-      .update({
+  async update(id, marcheData, destinations) {
+    try {
+      // 1. Préparer les données du marché
+      const updatePayload = {
         nom: marcheData.nom,
         reference: marcheData.reference,
         date_debut: marcheData.date_debut,
-        date_fin: marcheData.date_fin,
         statut: marcheData.statut,
-        description: marcheData.description,
-        montant_total: marcheData.montant_total
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
+        description: marcheData.description || '',
+        montant_total: marcheData.montant_total || 0
+      };
+
+      // Ajouter date_fin seulement si elle est définie et non vide
+      if (marcheData.date_fin && marcheData.date_fin.trim() !== '') {
+        updatePayload.date_fin = marcheData.date_fin;
+      } else {
+        updatePayload.date_fin = null;
+      }
+
+      // 2. Mettre à jour le marché
+      const { data, error } = await supabase
+        .from('marches')
+        .update(updatePayload)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+
+      // 3. Si des destinations sont fournies, mettre à jour les destinations
+      if (destinations && destinations.length > 0) {
+        // Supprimer les anciennes destinations
+        const { error: deleteError } = await supabase
+          .from('marche_destinations')
+          .delete()
+          .eq('marche_id', id);
+        
+        if (deleteError) throw deleteError;
+
+        // Ajouter les nouvelles destinations
+        const destinationsData = destinations.map(dest => ({
+          marche_id: id,
+          destination: dest.destination,
+          quantite_requise: dest.quantite_requise
+        }));
+
+        const { error: insertError } = await supabase
+          .from('marche_destinations')
+          .insert(destinationsData);
+
+        if (insertError) throw insertError;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur update marché:', error);
+      throw error;
+    }
   },
 
   // Supprimer un marché

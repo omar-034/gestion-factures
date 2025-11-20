@@ -158,13 +158,21 @@ const App = () => {
       return;
     }
 
+    console.log('🏢 Soumission marché:', {
+      formData: marcheFormData,
+      destinations: destinations,
+      isEditing: !!selectedMarche
+    });
+
     try {
       if (selectedMarche) {
-        // Mise à jour (simplifié - pas de gestion des destinations pour la mise à jour)
-        await marchesService.update(selectedMarche.id, marcheFormData);
+        // Mise à jour avec destinations
+        await marchesService.update(selectedMarche.id, marcheFormData, destinations);
+        console.log('✅ Marché mis à jour avec succès');
       } else {
         // Création avec destinations
         await marchesService.create(marcheFormData, destinations);
+        console.log('✅ Marché créé avec succès');
       }
       
       await loadAllData();
@@ -172,7 +180,7 @@ const App = () => {
       setView('marches');
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de l\'enregistrement du marché');
+      alert('Erreur lors de l\'enregistrement du marché: ' + error.message);
     }
   };
 
@@ -199,6 +207,9 @@ const App = () => {
   };
 
   const handleEditMarche = (marche) => {
+    console.log('✏️ Édition marché:', marche);
+    console.log('📋 Destinations du marché:', marche.marche_destinations);
+    
     setSelectedMarche(marche);
     setMarcheFormData({
       nom: marche.nom,
@@ -239,10 +250,12 @@ const App = () => {
       return;
     }
 
+    console.log('🚀 Soumission chargement avec marche_id:', loadFormData.marcheId);
+
     try {
       if (selectedLoad) {
         // Mise à jour
-        await loadService.update(selectedLoad.id, {
+        const updateData = {
           driver_name: loadFormData.driverName,
           marche_id: loadFormData.marcheId || null,
           origin: loadFormData.origin,
@@ -253,13 +266,15 @@ const App = () => {
           total_amount: parseFloat(loadFormData.totalAmount),
           date: loadFormData.date,
           description: loadFormData.description || ''
-        });
+        };
+        console.log('📝 Update data:', updateData);
+        await loadService.update(selectedLoad.id, updateData);
       } else {
         // Création
         const nextNumber = loads.length + 1;
         const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
         
-        await loadService.create({
+        const createData = {
           driver_name: loadFormData.driverName,
           marche_id: loadFormData.marcheId || null,
           load_number: loadNumber,
@@ -271,7 +286,9 @@ const App = () => {
           total_amount: parseFloat(loadFormData.totalAmount),
           date: loadFormData.date,
           description: loadFormData.description || ''
-        });
+        };
+        console.log('✨ Create data:', createData);
+        await loadService.create(createData);
       }
       
       await loadAllData();
@@ -279,7 +296,7 @@ const App = () => {
       setView('loads');
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de l\'enregistrement du chargement');
+      alert('Erreur lors de l\'enregistrement du chargement: ' + error.message);
     }
   };
 
