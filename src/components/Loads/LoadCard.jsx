@@ -152,7 +152,9 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
             {loadPayments.length === 0 ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
                 <p className="text-xs text-yellow-800">Aucun paiement pour ce chargement</p>
-                <p className="text-xs text-yellow-600 mt-1">Cliquez sur "Paiement" pour ajouter</p>
+                {onAddPayment && (
+                  <p className="text-xs text-yellow-600 mt-1">Cliquez sur "Paiement" pour ajouter</p>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -169,45 +171,55 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
                         <p className="text-xs text-gray-400 italic mt-1">{payment.note}</p>
                       )}
                     </div>
-                    <button
-                      onClick={() => onDeletePayment && onDeletePayment(payment.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title="Supprimer ce paiement"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {onDeletePayment && (
+                      <button
+                        onClick={() => onDeletePayment(payment.id)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Supprimer ce paiement"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={() => onAddPayment && onAddPayment(load)}
-              className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition text-sm font-medium flex items-center justify-center gap-1"
-            >
-              <DollarSign className="h-4 w-4" />
-              Paiement
-            </button>
-            
-            <button
-              onClick={() => onEdit && onEdit(load)}
-              className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center justify-center gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              Modifier
-            </button>
-            
-            <button
-              onClick={() => onDelete && onDelete(load.id)}
-              className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition text-sm font-medium flex items-center justify-center gap-1"
-            >
-              <Trash2 className="h-4 w-4" />
-              Supprimer
-            </button>
-          </div>
+          {/* Actions - Affichés seulement si les fonctions existent */}
+          {(onAddPayment || onEdit || onDelete) && (
+            <div className="flex gap-2 pt-2">
+              {onAddPayment && (
+                <button
+                  onClick={() => onAddPayment(load)}
+                  className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Paiement
+                </button>
+              )}
+              
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(load)}
+                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <Edit className="h-4 w-4" />
+                  Modifier
+                </button>
+              )}
+              
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(load.id)}
+                  className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Supprimer
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Description si elle existe */}
           {load.description && (

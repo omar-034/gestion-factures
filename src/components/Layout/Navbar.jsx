@@ -1,8 +1,8 @@
-// components/Layout/Navbar.jsx - Mis à jour avec Marchés
+// components/Layout/Navbar.jsx - Avec authentification
 import React, { useState } from 'react';
-import { Plus, Menu, X, Home, Users, Package, Briefcase } from 'lucide-react';
+import { Plus, Menu, X, Home, Users, Package, Briefcase, LogOut, Eye, Shield } from 'lucide-react';
 
-const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
+const Navbar = ({ currentView, onViewChange, onNewLoad, onLogout, userName, userRole }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
@@ -16,6 +16,26 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
     onViewChange(view);
     setMobileMenuOpen(false);
   };
+
+  const getRoleInfo = () => {
+    if (userRole === 'admin') {
+      return {
+        icon: Shield,
+        label: 'Admin',
+        color: 'bg-green-500',
+        textColor: 'text-green-100'
+      };
+    }
+    return {
+      icon: Eye,
+      label: 'Viewer',
+      color: 'bg-gray-500',
+      textColor: 'text-gray-100'
+    };
+  };
+
+  const roleInfo = getRoleInfo();
+  const RoleIcon = roleInfo.icon;
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-2xl sticky top-0 z-50">
@@ -53,12 +73,34 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
               );
             })}
             
+            {userRole === 'admin' && (
+              <button
+                onClick={onNewLoad}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl ml-2"
+              >
+                <Plus size={18} />
+                <span className="font-medium">Nouveau</span>
+              </button>
+            )}
+          </div>
+
+          {/* User Info & Logout */}
+          <div className="hidden md:flex items-center gap-3">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${roleInfo.color}`}>
+              <RoleIcon size={16} />
+              <span className="text-xs font-medium">{roleInfo.label}</span>
+            </div>
+            
+            <div className="text-right">
+              <p className="text-sm font-medium">{userName}</p>
+            </div>
+            
             <button
-              onClick={onNewLoad}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl ml-2"
+              onClick={onLogout}
+              className="flex items-center gap-2 px-3 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition-all duration-200"
+              title="Se déconnecter"
             >
-              <Plus size={18} />
-              <span className="font-medium">Nouveau</span>
+              <LogOut size={18} />
             </button>
           </div>
 
@@ -74,6 +116,19 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2 animate-fadeIn">
+            {/* User Info Mobile */}
+            <div className="bg-blue-700 rounded-lg p-3 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${roleInfo.color}`}>
+                    <RoleIcon size={14} />
+                    <span className="text-xs font-medium">{roleInfo.label}</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm">{userName}</p>
+            </div>
+
             {menuItems.map(item => {
               const Icon = item.icon;
               return (
@@ -92,15 +147,28 @@ const Navbar = ({ currentView, onViewChange, onNewLoad }) => {
               );
             })}
             
+            {userRole === 'admin' && (
+              <button
+                onClick={() => {
+                  onNewLoad();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-green-500 rounded-lg hover:bg-green-600 transition shadow-lg"
+              >
+                <Plus size={20} />
+                <span className="font-medium">Nouveau Chargement</span>
+              </button>
+            )}
+            
             <button
               onClick={() => {
-                onNewLoad();
+                onLogout();
                 setMobileMenuOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-green-500 rounded-lg hover:bg-green-600 transition shadow-lg"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-red-500 rounded-lg hover:bg-red-600 transition shadow-lg"
             >
-              <Plus size={20} />
-              <span className="font-medium">Nouveau Chargement</span>
+              <LogOut size={20} />
+              <span className="font-medium">Se déconnecter</span>
             </button>
           </div>
         )}

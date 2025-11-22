@@ -1,4 +1,4 @@
-// components/Drivers/DriverCard.jsx
+// components/Drivers/DriverCard.jsx - Avec gestion du mode viewer
 import React from 'react';
 import { User, Phone, IdCard, Edit2, Trash2 } from 'lucide-react';
 
@@ -19,20 +19,28 @@ const DriverCard = ({ driver, onEdit, onDelete }) => {
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => onEdit(driver)} 
-            className="text-blue-600 hover:text-blue-800"
-          >
-            <Edit2 size={18} />
-          </button>
-          <button 
-            onClick={() => onDelete(driver.id, driver.name)} 
-            className="text-red-600 hover:text-red-800"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
+        {(onEdit || onDelete) && (
+          <div className="flex gap-2">
+            {onEdit && (
+              <button 
+                onClick={() => onEdit(driver)} 
+                className="text-blue-600 hover:text-blue-800"
+                title="Modifier"
+              >
+                <Edit2 size={18} />
+              </button>
+            )}
+            {onDelete && (
+              <button 
+                onClick={() => onDelete(driver.id, driver.name)} 
+                className="text-red-600 hover:text-red-800"
+                title="Supprimer"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2 text-sm mb-4">

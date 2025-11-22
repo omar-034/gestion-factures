@@ -1,4 +1,4 @@
-// src/components/Marches/MarchesList.jsx
+// src/components/Marches/MarchesList.jsx - Avec gestion du mode viewer
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Briefcase, TrendingUp, Calendar, Eye, Edit2, Trash2 } from 'lucide-react';
 import { marchesService } from '../../services/marches.service';
@@ -7,7 +7,8 @@ const MarchesList = ({
   onEdit, 
   onDelete, 
   onAddNew,
-  onViewDetails 
+  onViewDetails,
+  canEdit = true
 }) => {
   const [marches, setMarches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,13 +100,15 @@ const MarchesList = ({
             />
           </div>
           
-          <button
-            onClick={onAddNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap"
-          >
-            <Plus size={20} />
-            <span className="hidden sm:inline">Nouveau Marché</span>
-          </button>
+          {canEdit && onAddNew && (
+            <button
+              onClick={onAddNew}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap"
+            >
+              <Plus size={20} />
+              <span className="hidden sm:inline">Nouveau Marché</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -197,21 +200,25 @@ const MarchesList = ({
                   Détails
                 </button>
                 
-                <button
-                  onClick={() => onEdit(marche)}
-                  className="bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition"
-                  title="Modifier"
-                >
-                  <Edit2 size={16} />
-                </button>
+                {canEdit && onEdit && (
+                  <button
+                    onClick={() => onEdit(marche)}
+                    className="bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition"
+                    title="Modifier"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                )}
                 
-                <button
-                  onClick={() => onDelete(marche.id)}
-                  className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition"
-                  title="Supprimer"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {canEdit && onDelete && (
+                  <button
+                    onClick={() => onDelete(marche.id)}
+                    className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))

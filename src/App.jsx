@@ -1,5 +1,9 @@
-// App.jsx - Version COMPLÈTE avec Marchés
+// App.jsx - Version avec authentification et gestion des rôles
 import React, { useState, useEffect } from 'react';
+
+// Auth
+import Login from './components/Auth/Login';
+import { authService } from './services/auth.service';
 
 // Layout
 import Navbar from './components/Layout/Navbar';
@@ -40,6 +44,13 @@ import { calculateGlobalStats, getRemainingBalance } from './utils/calculations'
 import { fallbackDestinations } from './data/fallbackDestinations';
 
 const App = () => {
+  // États d'authentification
+  const [authState, setAuthState] = useState({
+    user: null,
+    role: null,
+    loading: true
+  });
+
   // États principaux
   const [loads, setLoads] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -107,23 +118,56 @@ const App = () => {
     nom: '',
     reference: '',
     date_debut: new Date().toISOString().split('T')[0],
-    date_fin: null, // null au lieu de ''
+    date_fin: null,
     statut: 'En cours',
     description: '',
     montant_total: 0
   });
 
-  // Charger toutes les données au démarrage
+  // Vérifier la session au démarrage
   useEffect(() => {
-    loadAllData();
+    checkSession();
   }, []);
+
+  const checkSession = async () => {
+    try {
+      const session = await authService.getSession();
+      if (session) {
+        setAuthState({
+          user: session.user,
+          role: session.role,
+          loading: false
+        });
+      } else {
+        setAuthState({
+          user: null,
+          role: null,
+          loading: false
+        });
+      }
+    } catch (error) {
+      console.error('Erreur vérification session:', error);
+      setAuthState({
+        user: null,
+        role: null,
+        loading: false
+      });
+    }
+  };
+
+  // Charger toutes les données quand l'utilisateur est connecté
+  useEffect(() => {
+    if (authState.user) {
+      loadAllData();
+    }
+  }, [authState.user]);
 
   // Afficher la modal d'initialisation si la table destinations est vide
   useEffect(() => {
-    if (!destinationsLoading && destinationsEmpty && destinations.length === 0) {
+    if (authState.user && !destinationsLoading && destinationsEmpty && destinations.length === 0) {
       setShowInitModal(true);
     }
-  }, [destinationsLoading, destinationsEmpty, destinations.length]);
+  }, [authState.user, destinationsLoading, destinationsEmpty, destinations.length]);
 
   const loadAllData = async () => {
     try {
@@ -150,29 +194,63 @@ const App = () => {
     await loadAllData();
   };
 
+  // Fonction de connexion
+  const handleLogin = async (email, password) => {
+    try {
+      const { user, role } = await authService.login(email, password);
+      setAuthState({
+        user,
+        role,
+        loading: false
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Fonction de déconnexion
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      setAuthState({
+        user: null,
+        role: null,
+        loading: false
+      });
+      // Réinitialiser les données
+      setLoads([]);
+      setPayments([]);
+      setDrivers([]);
+      setMarches([]);
+      setView('dashboard');
+    } catch (error) {
+      console.error('Erreur déconnexion:', error);
+    }
+  };
+
+  // Vérifier si l'utilisateur peut modifier
+  const canEdit = () => {
+    return authState.role === 'admin';
+  };
+
   // ========== GESTION DES MARCHÉS ==========
   
   const handleMarcheSubmit = async (destinations) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     if (!marcheFormData.nom || !marcheFormData.reference || !marcheFormData.date_debut) {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    console.log('🏢 Soumission marché:', {
-      formData: marcheFormData,
-      destinations: destinations,
-      isEditing: !!selectedMarche
-    });
-
     try {
       if (selectedMarche) {
-        // Mise à jour avec destinations
         await marchesService.update(selectedMarche.id, marcheFormData, destinations);
-        console.log('✅ Marché mis à jour avec succès');
       } else {
-        // Création avec destinations
         await marchesService.create(marcheFormData, destinations);
-        console.log('✅ Marché créé avec succès');
       }
       
       await loadAllData();
@@ -185,6 +263,11 @@ const App = () => {
   };
 
   const handleDeleteMarche = async (id) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     const hasLoads = loads.some(load => load.marche_id === id);
     
     if (hasLoads) {
@@ -207,15 +290,17 @@ const App = () => {
   };
 
   const handleEditMarche = (marche) => {
-    console.log('✏️ Édition marché:', marche);
-    console.log('📋 Destinations du marché:', marche.marche_destinations);
-    
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     setSelectedMarche(marche);
     setMarcheFormData({
       nom: marche.nom,
       reference: marche.reference,
       date_debut: marche.date_debut,
-      date_fin: marche.date_fin || null, // Gérer null correctement
+      date_fin: marche.date_fin || null,
       statut: marche.statut,
       description: marche.description || '',
       montant_total: marche.montant_total || 0
@@ -233,7 +318,7 @@ const App = () => {
       nom: '',
       reference: '',
       date_debut: new Date().toISOString().split('T')[0],
-      date_fin: null, // null au lieu de ''
+      date_fin: null,
       statut: 'En cours',
       description: '',
       montant_total: 0
@@ -244,17 +329,19 @@ const App = () => {
   // ========== GESTION DES CHARGEMENTS ==========
   
   const handleLoadSubmit = async () => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     if (!loadFormData.driverName || !loadFormData.destination || 
         !loadFormData.typeChargement || !loadFormData.quantite) {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    console.log('🚀 Soumission chargement avec marche_id:', loadFormData.marcheId);
-
     try {
       if (selectedLoad) {
-        // Mise à jour
         const updateData = {
           driver_name: loadFormData.driverName,
           marche_id: loadFormData.marcheId || null,
@@ -267,10 +354,8 @@ const App = () => {
           date: loadFormData.date,
           description: loadFormData.description || ''
         };
-        console.log('📝 Update data:', updateData);
         await loadService.update(selectedLoad.id, updateData);
       } else {
-        // Création
         const nextNumber = loads.length + 1;
         const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
         
@@ -287,7 +372,6 @@ const App = () => {
           date: loadFormData.date,
           description: loadFormData.description || ''
         };
-        console.log('✨ Create data:', createData);
         await loadService.create(createData);
       }
       
@@ -301,6 +385,11 @@ const App = () => {
   };
 
   const handleDeleteLoad = async (id) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     const hasPayments = payments.some(p => (p.load_id || p.loadId) === id);
     
     if (hasPayments) {
@@ -319,6 +408,11 @@ const App = () => {
   };
 
   const handleEditLoad = (load) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     setSelectedLoad(load);
     setLoadFormData({
       driverName: load.driver_name || load.driverName || '',
@@ -354,6 +448,11 @@ const App = () => {
   // ========== GESTION DES CHAUFFEURS ==========
   
   const handleDriverSubmit = async () => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     if (!driverFormData.name || !driverFormData.phone) {
       alert('Veuillez remplir tous les champs obligatoires (Nom, Téléphone)');
       return;
@@ -398,6 +497,11 @@ const App = () => {
   };
 
   const handleDeleteDriver = async (id, driverName) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     const hasLoads = loads.some(load => 
       (load.driver_name || load.driverName) === driverName
     );
@@ -421,6 +525,11 @@ const App = () => {
   };
 
   const handleEditDriver = (driver) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     setSelectedDriver(driver);
     setDriverFormData({
       name: driver.name,
@@ -450,11 +559,21 @@ const App = () => {
   // ========== GESTION DES PAIEMENTS ==========
   
   const openPaymentModal = (load) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     setSelectedLoad(load);
     setShowPaymentModal(true);
   };
 
   const handlePaymentSubmit = async () => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     if (!paymentFormData.amount || parseFloat(paymentFormData.amount) <= 0) {
       alert('Veuillez entrer un montant valide');
       return;
@@ -487,6 +606,11 @@ const App = () => {
   };
 
   const handleDeletePayment = async (paymentId) => {
+    if (!canEdit()) {
+      alert('Vous n\'avez pas les permissions pour effectuer cette action');
+      return;
+    }
+
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')) {
       return;
     }
@@ -513,7 +637,26 @@ const App = () => {
   
   const stats = calculateGlobalStats(loads, drivers, payments);
 
-  // ========== RENDU ==========
+  // ========== AFFICHAGE PENDANT LE CHARGEMENT ==========
+  
+  if (authState.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== AFFICHAGE CONNEXION ==========
+  
+  if (!authState.user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  // ========== RENDU PRINCIPAL ==========
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -521,9 +664,16 @@ const App = () => {
         currentView={view}
         onViewChange={setView}
         onNewLoad={() => {
+          if (!canEdit()) {
+            alert('Vous n\'avez pas les permissions pour effectuer cette action');
+            return;
+          }
           resetLoadForm();
           setView('load-form');
         }}
+        onLogout={handleLogout}
+        userName={authState.user.email}
+        userRole={authState.role}
       />
 
       <div className="container mx-auto p-4 sm:p-6">
@@ -546,17 +696,18 @@ const App = () => {
             payments={payments}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            onEdit={handleEditDriver}
-            onDelete={handleDeleteDriver}
-            onAddNew={() => {
+            onEdit={canEdit() ? handleEditDriver : null}
+            onDelete={canEdit() ? handleDeleteDriver : null}
+            onAddNew={canEdit() ? () => {
               resetDriverForm();
               setView('driver-form');
-            }}
+            } : null}
+            canEdit={canEdit()}
           />
         )}
 
         {/* Formulaire Chauffeur */}
-        {view === 'driver-form' && (
+        {view === 'driver-form' && canEdit() && (
           <DriverForm
             formData={driverFormData}
             onChange={setDriverFormData}
@@ -577,15 +728,16 @@ const App = () => {
             drivers={drivers}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            onEdit={handleEditLoad}
-            onDelete={handleDeleteLoad}
-            onAddPayment={openPaymentModal}
-            onDeletePayment={handleDeletePayment}
+            onEdit={canEdit() ? handleEditLoad : undefined}
+            onDelete={canEdit() ? handleDeleteLoad : undefined}
+            onAddPayment={canEdit() ? openPaymentModal : undefined}
+            onDeletePayment={canEdit() ? handleDeletePayment : undefined}
+            readOnly={!canEdit()}
           />
         )}
 
         {/* Formulaire Chargement */}
-        {view === 'load-form' && (
+        {view === 'load-form' && canEdit() && (
           <LoadForm
             formData={loadFormData}
             drivers={drivers}
@@ -607,18 +759,19 @@ const App = () => {
         {/* Liste des Marchés */}
         {view === 'marches' && (
           <MarchesList
-            onEdit={handleEditMarche}
-            onDelete={handleDeleteMarche}
-            onAddNew={() => {
+            onEdit={canEdit() ? handleEditMarche : undefined}
+            onDelete={canEdit() ? handleDeleteMarche : undefined}
+            onAddNew={canEdit() ? () => {
               resetMarcheForm();
               setView('marche-form');
-            }}
+            } : undefined}
             onViewDetails={handleViewMarcheDetails}
+            readOnly={!canEdit()}
           />
         )}
 
         {/* Formulaire Marché */}
-        {view === 'marche-form' && (
+        {view === 'marche-form' && canEdit() && (
           <MarcheForm
             formData={marcheFormData}
             destinations={selectedMarche?.marche_destinations || []}
@@ -643,7 +796,7 @@ const App = () => {
       </div>
 
       {/* Modal de Paiement */}
-      {showPaymentModal && selectedLoad && (
+      {showPaymentModal && selectedLoad && canEdit() && (
         <PaymentModal
           selectedLoad={selectedLoad}
           payments={payments}
@@ -658,7 +811,7 @@ const App = () => {
       )}
 
       {/* Modal d'initialisation des destinations */}
-      {showInitModal && (
+      {showInitModal && canEdit() && (
         <InitDestinations onInitialized={handleInitialized} />
       )}
     </div>

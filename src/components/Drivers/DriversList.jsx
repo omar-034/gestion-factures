@@ -1,4 +1,4 @@
-// components/Drivers/DriversList.jsx
+// src/components/Drivers/DriversList.jsx - Avec gestion du mode viewer
 import React from 'react';
 import { Search, Plus, Users } from 'lucide-react';
 import DriverCard from './DriverCard';
@@ -12,7 +12,8 @@ const DriversList = ({
   onSearchChange, 
   onEdit, 
   onDelete, 
-  onAddNew 
+  onAddNew,
+  canEdit = true
 }) => {
   const driverStats = getDriverStats(drivers, loads, payments);
   const filteredDrivers = driverStats.filter(drv =>
@@ -35,12 +36,14 @@ const DriversList = ({
               className="outline-none"
             />
           </div>
-          <button
-            onClick={onAddNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-          >
-            <Plus size={20} /> Ajouter Chauffeur
-          </button>
+          {canEdit && onAddNew && (
+            <button
+              onClick={onAddNew}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <Plus size={20} /> Ajouter Chauffeur
+            </button>
+          )}
         </div>
       </div>
 
@@ -55,8 +58,8 @@ const DriversList = ({
             <DriverCard
               key={driver.id}
               driver={driver}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              onEdit={canEdit && onEdit ? onEdit : null}
+              onDelete={canEdit && onDelete ? onDelete : null}
             />
           ))
         )}
