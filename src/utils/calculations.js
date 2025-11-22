@@ -12,11 +12,37 @@ export const getRemainingBalance = (load, payments) => {
   return parseFloat(load.total_amount || load.totalAmount) - totalPaid;
 };
 
+// Fonction mise à jour pour déterminer le statut d'un chargement dans un marché
 export const getLoadStatus = (load, payments) => {
   const remaining = getRemainingBalance(load, payments);
-  if (remaining === 0) return 'Payé';
-  if (remaining === parseFloat(load.totalAmount || load.total_amount)) return 'Non payé';
-  return 'Partiellement payé';
+  const totalAmount = parseFloat(load.totalAmount || load.total_amount);
+  
+  // Complété : reste entre 0 et 100 000 FCFA
+  if (remaining >= 0 && remaining <= 100000) {
+    return 'Complété';
+  }
+  
+  // En attente : reste égal au montant total (aucun paiement)
+  if (remaining === totalAmount) {
+    return 'En attente';
+  }
+  
+  // En cours : dans tous les autres cas
+  return 'En cours';
+};
+
+// Fonction pour obtenir la couleur du badge de statut
+export const getStatusColor = (status) => {
+  switch (status) {
+    case 'Complété':
+      return 'bg-green-100 text-green-800';
+    case 'En cours':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'En attente':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
 };
 
 export const getDriverStats = (drivers, loads, payments) => {
@@ -121,6 +147,20 @@ export const getRecentPayments = (payments, loads, limit = 5) => {
       paymentMethod: payment.payment_method || payment.paymentMethod || 'cash'
     };
   });
+};
+
+// NOUVELLE FONCTION : Obtenir les 10 derniers chargements
+export const getRecentLoads = (loads, payments, limit = 10) => {
+  const enrichedLoads = getEnrichedLoads(loads, payments);
+  
+  // Trier par date de création (plus récent en premier)
+  return enrichedLoads
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at || a.date);
+      const dateB = new Date(b.created_at || b.date);
+      return dateB - dateA; // Ordre décroissant
+    })
+    .slice(0, limit);
 };
 
 // Fonction pour trier les chauffeurs par date du dernier chargement (plus récent en premier)

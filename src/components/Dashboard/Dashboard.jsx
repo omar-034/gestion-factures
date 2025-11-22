@@ -1,19 +1,14 @@
-// components/Dashboard/Dashboard.jsx - Mis à jour avec Marchés
+// components/Dashboard/Dashboard.jsx - Mis à jour avec les 10 derniers chargements
 import React from 'react';
-import { DollarSign, TrendingUp, AlertCircle, Users } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, Users, Package, MapPin, Calendar } from 'lucide-react';
 import StatCard from './StatCard';
 import MarcheDashboard from '../Marches/MarcheDashboard';
-import { getEnrichedLoads, getDriverStats, formatNumber, sortPaymentsByDate, getRecentPayments } from '../../utils/calculations';
+import { getEnrichedLoads, formatNumber, sortPaymentsByDate, getRecentPayments, getRecentLoads, getStatusColor } from '../../utils/calculations';
 
 const Dashboard = ({ loads, drivers, payments, stats, onViewMarcheDetails }) => {
   const enrichedLoads = getEnrichedLoads(loads, payments);
-  const driverStats = getDriverStats(drivers, loads, payments);
   const recentPayments = getRecentPayments(payments, loads, 5);
-
-  // Trier les chauffeurs par date du dernier chargement (du plus récent au plus ancien)
-  const sortedDriverStats = [...driverStats].sort((a, b) => 
-    new Date(b.lastLoadDate) - new Date(a.lastLoadDate)
-  );
+  const recentLoads = getRecentLoads(loads, payments, 10);
 
   // Fonction pour normaliser la méthode de paiement
   const getPaymentMethodInfo = (paymentMethod) => {
@@ -90,7 +85,7 @@ const Dashboard = ({ loads, drivers, payments, stats, onViewMarcheDetails }) => 
         />
       </div>
 
-      {/* Section Marchés Actifs */}
+      {/* Section Marchés Actifs et Derniers Paiements */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
         <div className="xl:col-span-1">
           <MarcheDashboard onViewDetails={onViewMarcheDetails} />
@@ -156,42 +151,92 @@ const Dashboard = ({ loads, drivers, payments, stats, onViewMarcheDetails }) => 
         </div>
       </div>
 
-      {/* Top Chauffeurs */}
+      {/* 10 Derniers Chargements */}
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-800">Top Chauffeurs</h3>
-          <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
-            {sortedDriverStats.length}
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
+            <Package size={24} className="text-blue-600" />
+            10 Derniers Chargements
+          </h3>
+          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+            {recentLoads.length}
           </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-          {sortedDriverStats.length === 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+          {recentLoads.length === 0 ? (
             <div className="col-span-full text-center py-8">
-              <div className="text-gray-400 mb-2">👤</div>
-              <p className="text-gray-500 text-sm">Aucun chauffeur enregistré</p>
+              <Package size={48} className="mx-auto text-gray-400 mb-2" />
+              <p className="text-gray-500 text-sm">Aucun chargement enregistré</p>
             </div>
           ) : (
-            sortedDriverStats.slice(0, 6).map((driver, idx) => (
-              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg hover:shadow-md transition border border-gray-100">
-                <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {driver.name.charAt(0)}
+            recentLoads.map((load) => (
+              <div 
+                key={load.id} 
+                className="flex flex-col p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg hover:shadow-md transition border border-gray-100"
+              >
+                {/* En-tête */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {load.driverName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 truncate">{load.driverName}</p>
+                      <p className="text-xs text-gray-500">#{load.loadNumber}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800 truncate">{driver.name}</p>
-                    <p className="text-xs text-gray-500">{driver.phone}</p>
-                    <p className="text-xs text-gray-400">{driver.totalLoads} chargement(s)</p>
-                    {driver.lastLoadDate && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Dernier: {new Date(driver.lastLoadDate).toLocaleDateString('fr-FR')}
-                      </p>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(load.status)}`}>
+                    {load.status}
+                  </span>
+                </div>
+
+                {/* Trajet */}
+                <div className="flex items-center gap-2 text-xs text-gray-600 mb-3">
+                  <MapPin size={14} className="flex-shrink-0" />
+                  <span className="truncate">{load.origin} → {load.destination}</span>
+                </div>
+
+                {/* Date */}
+                <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                  <Calendar size={14} className="flex-shrink-0" />
+                  <span>
+                    {new Date(load.date || load.created_at).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+
+                {/* Détails chargement */}
+                <div className="text-xs text-gray-600 mb-3">
+                  <p>{load.type_chargement} • {load.quantite} tonnes</p>
+                </div>
+
+                {/* Financier */}
+                <div className="pt-3 border-t border-gray-200 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Total:</span>
+                    <span className="font-bold text-blue-600">{formatNumber(load.totalAmount)} FCFA</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Payé:</span>
+                    <span className="font-bold text-green-600">{formatNumber(load.totalPaid)} FCFA</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Restant:</span>
+                    <span className="font-bold text-orange-600">{formatNumber(load.remaining)} FCFA</span>
+                  </div>
+                  
+                  {/* Nombre de paiements */}
+                  <div className="flex items-center justify-between text-xs pt-2">
+                    <span className="text-gray-500">
+                      {load.paymentsCount} paiement{load.paymentsCount > 1 ? 's' : ''}
+                    </span>
+                    {load.remaining > 0 && load.remaining <= 100000 && (
+                      <span className="text-green-600 font-medium">✓ Presque terminé</span>
                     )}
                   </div>
-                </div>
-                <div className="text-left sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Total: {formatNumber(driver.totalAmount)} FCFA</p>
-                  <p className="text-xs sm:text-sm text-green-600">Payé: {formatNumber(driver.totalPaid)} FCFA</p>
-                  <p className="font-bold text-orange-600 text-sm">Reste: {formatNumber(driver.remaining)} FCFA</p>
                 </div>
               </div>
             ))

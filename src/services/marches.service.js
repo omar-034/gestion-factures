@@ -1,5 +1,28 @@
-// src/services/marches.service.js
+// src/services/marches.service.js - Mis à jour avec calcul des statuts
 import { supabase } from '../supabaseClient';
+
+// Fonction helper pour calculer le statut d'un chargement
+const calculateLoadStatus = (load, payments) => {
+  const totalAmount = parseFloat(load.total_amount || 0);
+  
+  // Trouver les paiements pour ce chargement
+  const loadPayments = payments.filter(p => p.load_id === load.id);
+  const totalPaid = loadPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+  const remaining = totalAmount - totalPaid;
+  
+  // Complété : reste entre 0 et 100 000 FCFA
+  if (remaining >= 0 && remaining <= 100000) {
+    return { status: 'Complété', totalPaid, remaining };
+  }
+  
+  // En attente : reste égal au montant total (aucun paiement)
+  if (remaining === totalAmount) {
+    return { status: 'En attente', totalPaid, remaining };
+  }
+  
+  // En cours : dans tous les autres cas
+  return { status: 'En cours', totalPaid, remaining };
+};
 
 export const marchesService = {
   // Récupérer tous les marchés
@@ -184,7 +207,7 @@ export const marchesService = {
     if (error) throw error;
   },
 
-  // Obtenir les statistiques d'un marché
+  // Obtenir les statistiques d'un marché avec statuts détaillés
   async getStats(marcheId) {
     try {
       // Récupérer le marché et ses destinations
@@ -198,10 +221,32 @@ export const marchesService = {
       
       if (loadsError) throw loadsError;
 
+      // Récupérer tous les paiements pour ces chargements
+      const loadIds = loads.map(l => l.id);
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*')
+        .in('load_id', loadIds);
+      
+      if (paymentsError) throw paymentsError;
+
       // Calculer les statistiques par destination
       const destinationsStats = marche.marche_destinations.map(dest => {
         const loadsForDest = loads.filter(load => load.destination === dest.destination);
-        const quantiteLivree = loadsForDest.length;
+        
+        // Enrichir chaque chargement avec son statut
+        const enrichedLoads = loadsForDest.map(load => {
+          const { status, totalPaid, remaining } = calculateLoadStatus(load, payments);
+          return {
+            ...load,
+            status,
+            total_paid: totalPaid,
+            remaining
+          };
+        });
+
+        // Compter seulement les chargements "Complétés" pour la quantité livrée
+        const quantiteLivree = enrichedLoads.filter(l => l.status === 'Complété').length;
         const tauxExecution = dest.quantite_requise > 0 
           ? (quantiteLivree / dest.quantite_requise) * 100 
           : 0;
@@ -210,11 +255,15 @@ export const marchesService = {
           ...dest,
           quantite_livree: quantiteLivree,
           taux_execution: tauxExecution,
-          loads: loadsForDest
+          loads: enrichedLoads,
+          // Compteurs par statut
+          loads_complete: enrichedLoads.filter(l => l.status === 'Complété').length,
+          loads_en_cours: enrichedLoads.filter(l => l.status === 'En cours').length,
+          loads_en_attente: enrichedLoads.filter(l => l.status === 'En attente').length
         };
       });
 
-      // Calculer le taux d'exécution global
+      // Calculer le taux d'exécution global (basé sur les complétés uniquement)
       const totalRequis = marche.marche_destinations.reduce((sum, d) => sum + d.quantite_requise, 0);
       const totalLivre = destinationsStats.reduce((sum, d) => sum + d.quantite_livree, 0);
       const tauxExecutionGlobal = totalRequis > 0 ? (totalLivre / totalRequis) * 100 : 0;
@@ -225,7 +274,11 @@ export const marchesService = {
         total_requis: totalRequis,
         total_livre: totalLivre,
         taux_execution_global: tauxExecutionGlobal,
-        total_chargements: loads.length
+        total_chargements: loads.length,
+        // Compteurs globaux par statut
+        total_complete: destinationsStats.reduce((sum, d) => sum + d.loads_complete, 0),
+        total_en_cours: destinationsStats.reduce((sum, d) => sum + d.loads_en_cours, 0),
+        total_en_attente: destinationsStats.reduce((sum, d) => sum + d.loads_en_attente, 0)
       };
     } catch (error) {
       console.error('Erreur getStats:', error);

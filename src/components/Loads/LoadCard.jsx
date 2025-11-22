@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Edit, Trash2, DollarSign, ChevronDown, ChevronUp, Truck, MapPin, Phone } from 'lucide-react';
+import { getStatusColor } from '../../utils/calculations';
 
 const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAddPayment, onDeletePayment }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -15,15 +16,6 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
   const totalPaid = loadPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
   const totalAmount = Number(load.total_amount || load.totalAmount || 0);
   const remaining = totalAmount - totalPaid;
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Payé': return 'bg-green-100 text-green-800';
-      case 'Partiellement payé': return 'bg-yellow-100 text-yellow-800';
-      case 'Non payé': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
@@ -42,7 +34,7 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
               </h3>
             </div>
             
-            {/* Numéro de téléphone - NOUVEAU */}
+            {/* Numéro de téléphone */}
             <div className="flex items-center gap-2 mb-2">
               <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
               <p className="text-xs text-gray-600 truncate">
@@ -119,9 +111,9 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
             </div>
           </div>
 
-          {/* Résumé financier */}
+          {/* Résumé financier avec badge de statut */}
           <div className="bg-white p-3 rounded-lg border border-gray-200 mb-4">
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center mb-2">
               <div>
                 <p className="text-xs text-gray-500">Total</p>
                 <p className="text-sm font-bold text-gray-900">{formatNumber(totalAmount)}</p>
@@ -135,12 +127,34 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
                 <p className="text-sm font-bold text-orange-600">{formatNumber(remaining)}</p>
               </div>
             </div>
+            
+            {/* Indicateur de statut avec explication */}
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Statut :</span>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(load.status)}`}>
+                  {load.status}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {load.status === 'Complété' && '✓ Reste ≤ 100 000 FCFA'}
+                {load.status === 'En attente' && '⏳ Aucun paiement effectué'}
+                {load.status === 'En cours' && '🔄 Paiements en cours'}
+              </p>
+            </div>
           </div>
 
-          {/* Liste des paiements */}
-          {loadPayments.length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs font-medium text-gray-700 mb-2">Paiements ({loadPayments.length})</p>
+          {/* Liste des paiements avec message si vide */}
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-700 mb-2">
+              Paiements pour ce chargement ({loadPayments.length})
+            </p>
+            {loadPayments.length === 0 ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                <p className="text-xs text-yellow-800">Aucun paiement pour ce chargement</p>
+                <p className="text-xs text-yellow-600 mt-1">Cliquez sur "Paiement" pour ajouter</p>
+              </div>
+            ) : (
               <div className="space-y-2">
                 {loadPayments.map(payment => (
                   <div key={payment.id} className="flex items-center justify-between bg-white p-2 rounded border">
@@ -151,18 +165,22 @@ const LoadCard = ({ load, loadPayments = [], driverPhone, onEdit, onDelete, onAd
                       <p className="text-xs text-gray-500">
                         {formatDate(payment.date)} • {payment.payment_method || 'Espèces'}
                       </p>
+                      {payment.note && (
+                        <p className="text-xs text-gray-400 italic mt-1">{payment.note}</p>
+                      )}
                     </div>
                     <button
                       onClick={() => onDeletePayment && onDeletePayment(payment.id)}
                       className="text-red-600 hover:text-red-800 p-1"
+                      title="Supprimer ce paiement"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
