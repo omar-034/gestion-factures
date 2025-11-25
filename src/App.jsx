@@ -356,7 +356,16 @@ const App = () => {
         };
         await loadService.update(selectedLoad.id, updateData);
       } else {
-        const nextNumber = loads.length + 1;
+        // Trouve le plus grand numéro existant
+        const existingNumbers = loads
+          .map(l => {
+            const num = (l.load_number || l.loadNumber || '').replace('CHG', '');
+            return parseInt(num) || 0;
+          })
+          .filter(n => !isNaN(n));
+
+        const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+        const nextNumber = maxNumber + 1;
         const loadNumber = `CHG${String(nextNumber).padStart(4, '0')}`;
         
         const createData = {
@@ -728,11 +737,11 @@ const App = () => {
             drivers={drivers}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            onEdit={canEdit() ? handleEditLoad : undefined}
-            onDelete={canEdit() ? handleDeleteLoad : undefined}
-            onAddPayment={canEdit() ? openPaymentModal : undefined}
-            onDeletePayment={canEdit() ? handleDeletePayment : undefined}
-            readOnly={!canEdit()}
+            onEdit={canEdit() ? handleEditLoad : null}
+            onDelete={canEdit() ? handleDeleteLoad : null}
+            onAddPayment={canEdit() ? openPaymentModal : null}
+            onDeletePayment={canEdit() ? handleDeletePayment : null}
+            canEdit={canEdit()}
           />
         )}
 
@@ -759,14 +768,14 @@ const App = () => {
         {/* Liste des Marchés */}
         {view === 'marches' && (
           <MarchesList
-            onEdit={canEdit() ? handleEditMarche : undefined}
-            onDelete={canEdit() ? handleDeleteMarche : undefined}
+            onEdit={canEdit() ? handleEditMarche : null}
+            onDelete={canEdit() ? handleDeleteMarche : null}
             onAddNew={canEdit() ? () => {
               resetMarcheForm();
               setView('marche-form');
-            } : undefined}
+            } : null}
             onViewDetails={handleViewMarcheDetails}
-            readOnly={!canEdit()}
+            canEdit={canEdit()}
           />
         )}
 
