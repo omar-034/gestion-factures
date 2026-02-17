@@ -119,11 +119,11 @@ const Login = ({ onLogin }) => {
             <div className="space-y-2 text-xs">
               <div className="bg-blue-50 p-2 rounded">
                 <p className="font-semibold text-blue-900">👤 Admin</p>
-                <p className="text-blue-700">admin@transport.com / admin123</p>
+                <p className="text-blue-700"></p>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <p className="font-semibold text-gray-900">👁️ Viewer</p>
-                <p className="text-gray-700">viewer@transport.com / viewer123</p>
+                <p className="text-gray-700">viewer@transport.com / viewer12</p>
               </div>
             </div>
           </div>
