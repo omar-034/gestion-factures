@@ -1,13 +1,16 @@
-// src/components/Marches/MarcheDetails.jsx - Avec détails des chargements
+// src/components/Marches/MarcheDetails.jsx - Avec détails des chargements et masquage financier
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, TrendingUp, Package, MapPin, CheckCircle, AlertCircle, Truck, Phone, DollarSign } from 'lucide-react';
 import { marchesService } from '../../services/marches.service';
 import { getStatusColor } from '../../utils/calculations';
 
-const MarcheDetails = ({ marcheId, onBack }) => {
+const MarcheDetails = ({ marcheId, onBack, userRole }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedDestination, setExpandedDestination] = useState(null);
+
+  // Définir qui a le droit de voir les finances
+  const showFinancials = userRole === 'admin';
 
   useEffect(() => {
     loadStats();
@@ -379,60 +382,65 @@ const MarcheDetails = ({ marcheId, onBack }) => {
                                   {load.quantite} tonnes
                                 </p>
                               </div>
-                              <div>
-                                <p className="text-gray-500 text-xs">Prix/tonne</p>
-                                <p className="font-medium text-gray-900">
-                                  {formatNumber(load.prix_par_tonne)} FCFA
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Financier */}
-                            <div className="pt-3 border-t border-gray-200">
-                              <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                              {/* Conditionner l'affichage du Prix/tonne */}
+                              {showFinancials && (
                                 <div>
-                                  <p className="text-xs text-gray-500">Total</p>
-                                  <p className="text-sm font-bold text-blue-600">
-                                    {formatNumber(totalAmount)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">Payé</p>
-                                  <p className="text-sm font-bold text-green-600">
-                                    {formatNumber(totalPaid)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">Reste</p>
-                                  <p className="text-sm font-bold text-orange-600">
-                                    {formatNumber(remaining)}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Indicateur de statut */}
-                              {load.status === 'Complété' && (
-                                <div className="bg-green-50 border border-green-200 rounded p-2 mt-2">
-                                  <p className="text-xs text-green-800 text-center">
-                                    ✓ Chargement complété (reste ≤ 100 000 FCFA)
-                                  </p>
-                                </div>
-                              )}
-                              {load.status === 'En attente' && (
-                                <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
-                                  <p className="text-xs text-red-800 text-center">
-                                    ⏸️ En attente de paiement
-                                  </p>
-                                </div>
-                              )}
-                              {load.status === 'En cours' && remaining <= 100000 && (
-                                <div className="bg-blue-50 border border-blue-200 rounded p-2 mt-2">
-                                  <p className="text-xs text-blue-800 text-center">
-                                    💡 Presque terminé ! Reste {formatNumber(remaining)} FCFA
+                                  <p className="text-gray-500 text-xs">Prix/tonne</p>
+                                  <p className="font-medium text-gray-900">
+                                    {formatNumber(load.prix_par_tonne)} FCFA
                                   </p>
                                 </div>
                               )}
                             </div>
+
+                            {/* Financier - Uniquement si admin */}
+                            {showFinancials && (
+                              <div className="pt-3 border-t border-gray-200">
+                                <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                                  <div>
+                                    <p className="text-xs text-gray-500">Total</p>
+                                    <p className="text-sm font-bold text-blue-600">
+                                      {formatNumber(totalAmount)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Payé</p>
+                                    <p className="text-sm font-bold text-green-600">
+                                      {formatNumber(totalPaid)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Reste</p>
+                                    <p className="text-sm font-bold text-orange-600">
+                                      {formatNumber(remaining)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Indicateurs de statut */}
+                                {load.status === 'Complété' && (
+                                  <div className="bg-green-50 border border-green-200 rounded p-2 mt-2">
+                                    <p className="text-xs text-green-800 text-center">
+                                      ✓ Chargement complété (reste ≤ 100 000 FCFA)
+                                    </p>
+                                  </div>
+                                )}
+                                {load.status === 'En attente' && (
+                                  <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
+                                    <p className="text-xs text-red-800 text-center">
+                                      ⏸️ En attente de paiement
+                                    </p>
+                                  </div>
+                                )}
+                                {load.status === 'En cours' && remaining <= 100000 && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded p-2 mt-2">
+                                    <p className="text-xs text-blue-800 text-center">
+                                      💡 Presque terminé ! Reste {formatNumber(remaining)} FCFA
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

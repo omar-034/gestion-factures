@@ -13,7 +13,8 @@ const DriversList = ({
   onEdit, 
   onDelete, 
   onAddNew,
-  canEdit = true
+  canEdit = true,
+  userRole // <-- AJOUT DU ROLE ICI
 }) => {
   const driverStats = getDriverStats(drivers, loads, payments);
   const filteredDrivers = driverStats.filter(drv =>
@@ -60,6 +61,7 @@ const DriversList = ({
               driver={driver}
               onEdit={canEdit && onEdit ? onEdit : null}
               onDelete={canEdit && onDelete ? onDelete : null}
+              userRole={userRole} // <-- TRANSMISSION DU ROLE A LA CARTE
             />
           ))
         )}

@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_Ah2m4AH7TMBqrJBMeVTUwwSgB9cJ",
+  "orgId": "team_aHVISQsQdtWcK6mBAP7M7veC",
+  "projectName": "gestion-factures",
+  "settings": {
+    "createdAt": 1763324962191,
+    "framework": null,
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}

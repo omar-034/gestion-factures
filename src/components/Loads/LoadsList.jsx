@@ -12,7 +12,8 @@ const LoadsList = ({
   onDelete,
   onAddPayment,
   onDeletePayment,
-  drivers = [] // Assurez-vous de passer les drivers en prop
+  drivers = [],
+  userRole
 }) => {
   const safeLoads = Array.isArray(loads) ? loads : [];
   const safePayments = Array.isArray(payments) ? payments : [];
@@ -39,10 +40,12 @@ const LoadsList = ({
     );
   }
   
-  // Fonction pour obtenir le téléphone du chauffeur
-  const getDriverPhone = (driverName) => {
+  // Fonction améliorée pour obtenir le téléphone et le permis du chauffeur
+  const getDriverInfo = (driverName) => {
     const driver = drivers.find(d => d.name === driverName);
-    return driver ? driver.phone : 'Non renseigné';
+    return driver 
+      ? { phone: driver.phone, license: driver.license_number || driver.licenseNumber } 
+      : { phone: 'Non renseigné', license: 'Non renseigné' };
   };
 
   const filteredLoads = enrichedLoads.filter(load => {
@@ -52,14 +55,15 @@ const LoadsList = ({
       const loadNumber = (load.loadNumber || load.load_number || '').toLowerCase();
       const origin = (load.origin || '').toLowerCase();
       const destination = (load.destination || '').toLowerCase();
-      const driverPhone = getDriverPhone(load.driverName || load.driver_name || '').toLowerCase();
+      const driverInfo = getDriverInfo(load.driverName || load.driver_name || '');
       
       return (
         driverName.includes(searchLower) ||
         loadNumber.includes(searchLower) ||
         origin.includes(searchLower) ||
         destination.includes(searchLower) ||
-        driverPhone.includes(searchLower)
+        driverInfo.phone.includes(searchLower) ||
+        (driverInfo.license && driverInfo.license.toLowerCase().includes(searchLower))
       );
     } catch (error) {
       console.error('Erreur filtrage:', error);
@@ -69,19 +73,17 @@ const LoadsList = ({
 
   return (
     <div className="space-y-4">
-      {/* En-tête optimisé mobile */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Chargements</h2>
           <p className="text-gray-500 text-sm">{filteredLoads.length} chargement(s)</p>
         </div>
         
-        {/* Barre de recherche mobile */}
         <div className="relative w-full sm:w-auto">
           <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher chauffeur, téléphone, destination..."
+            placeholder="Rechercher chauffeur, téléphone, permis..."
             value={searchTerm}
             onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -89,7 +91,6 @@ const LoadsList = ({
         </div>
       </div>
 
-      {/* Liste des chargements - version mobile compacte */}
       <div className="space-y-3">
         {filteredLoads.length === 0 ? (
           <div className="bg-white p-8 rounded-lg shadow text-center">
@@ -104,18 +105,20 @@ const LoadsList = ({
               const loadPayments = safePayments.filter(p => 
                 (p.load_id || p.loadId) === load.id
               );
-              const driverPhone = getDriverPhone(load.driverName || load.driver_name || '');
+              const driverInfo = getDriverInfo(load.driverName || load.driver_name || '');
               
               return (
                 <LoadCard
                   key={load.id}
                   load={load}
                   loadPayments={loadPayments}
-                  driverPhone={driverPhone} // Passer le téléphone en prop
+                  driverPhone={driverInfo.phone}
+                  driverLicense={driverInfo.license} // <-- TRANSMISSION DU PERMIS ICI
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onAddPayment={onAddPayment}
                   onDeletePayment={onDeletePayment}
+                  userRole={userRole}
                 />
               );
             } catch (error) {

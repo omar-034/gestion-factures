@@ -1,4 +1,4 @@
-// App.jsx - Version avec authentification et gestion des rôles
+// src/App.jsx - Version avec authentification et gestion des rôles
 import React, { useState, useEffect } from 'react';
 
 // Auth
@@ -356,7 +356,6 @@ const App = () => {
         };
         await loadService.update(selectedLoad.id, updateData);
       } else {
-        // Trouve le plus grand numéro existant
         const existingNumbers = loads
           .map(l => {
             const num = (l.load_number || l.loadNumber || '').replace('CHG', '');
@@ -694,6 +693,7 @@ const App = () => {
             payments={payments}
             stats={stats}
             onViewMarcheDetails={handleViewMarcheDetails}
+            userRole={authState.role}
           />
         )}
 
@@ -742,6 +742,7 @@ const App = () => {
             onAddPayment={canEdit() ? openPaymentModal : null}
             onDeletePayment={canEdit() ? handleDeletePayment : null}
             canEdit={canEdit()}
+            userRole={authState.role}
           />
         )}
 
@@ -800,6 +801,7 @@ const App = () => {
           <MarcheDetails
             marcheId={selectedMarche.id}
             onBack={() => setView('marches')}
+            userRole={authState.role}
           />
         )}
       </div>

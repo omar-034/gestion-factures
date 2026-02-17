@@ -1,8 +1,16 @@
-// components/Drivers/DriverCard.jsx - Avec gestion du mode viewer
+// components/Drivers/DriverCard.jsx - Avec gestion du mode viewer et masquage financier
 import React from 'react';
 import { User, Phone, IdCard, Edit2, Trash2 } from 'lucide-react';
 
-const DriverCard = ({ driver, onEdit, onDelete }) => {
+const DriverCard = ({ driver, onEdit, onDelete, userRole }) => {
+  // Vérifier si l'utilisateur a le droit de voir l'argent
+  const showFinancials = userRole === 'admin';
+
+  // Utilitaire pour un formatage propre
+  const formatNumber = (number) => {
+    return Number(number).toLocaleString('fr-FR');
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
       <div className="flex items-start justify-between mb-4">
@@ -50,7 +58,7 @@ const DriverCard = ({ driver, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <IdCard size={16} />
-          <span>Permis: {driver.licenseNumber || driver.license_number}</span>
+          <span>Permis: {driver.licenseNumber || driver.license_number || 'Non renseigné'}</span>
         </div>
         {(driver.vehicleType || driver.vehicle_type) && (
           <div className="text-gray-600">
@@ -70,18 +78,24 @@ const DriverCard = ({ driver, onEdit, onDelete }) => {
           <span className="text-gray-600">Chargements:</span>
           <span className="font-bold">{driver.totalLoads}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Total:</span>
-          <span className="font-bold text-blue-600">{driver.totalAmount.toFixed(0)} FCFA</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Payé:</span>
-          <span className="font-bold text-green-600">{driver.totalPaid.toFixed(0)} FCFA</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Restant:</span>
-          <span className="font-bold text-orange-600">{driver.remaining.toFixed(0)} FCFA</span>
-        </div>
+        
+        {/* MASQUER CETTE PARTIE POUR LES VIEWERS */}
+        {showFinancials && (
+          <>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Total:</span>
+              <span className="font-bold text-blue-600">{formatNumber(driver.totalAmount.toFixed(0))} FCFA</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Payé:</span>
+              <span className="font-bold text-green-600">{formatNumber(driver.totalPaid.toFixed(0))} FCFA</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Restant:</span>
+              <span className="font-bold text-orange-600">{formatNumber(driver.remaining.toFixed(0))} FCFA</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
